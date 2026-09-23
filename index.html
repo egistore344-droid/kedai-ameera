@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kedai Jajanan AMEERA — Pesan Online</title>
 <meta name="description" content="Pesan seblak, mie seblak, cemilan dan minuman dari Kedai Jajanan AMEERA langsung lewat WhatsApp.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4A2412">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AMEERA">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
@@ -63,6 +70,17 @@
   .promo-pedas .stiker{bottom:-1cqw;left:0;transform:rotate(-7deg)}
   .pita{background:var(--coklat);color:#FFF3C4}
   .pita .wrap{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:center;padding-top:10px;padding-bottom:10px;font-weight:700;font-size:.9rem;text-align:center}
+  .btn-pasang{background:var(--kerupuk);color:var(--coklat);border:2px solid #FFF3C4;border-radius:99px;padding:3px 14px;font-weight:800;font-size:.85rem}
+  .btn-pasang[hidden]{display:none}
+  .btn-tambah:disabled{background:#EFE7DA;color:#A08F82;border-color:#CDBFB1;box-shadow:none;cursor:not-allowed}
+  .status{border-radius:99px;padding:1px 10px;font-size:.8rem;font-weight:800}
+  .status.buka{background:#2E7D32;color:#fff}
+  .status.tutup{background:var(--cabai);color:#fff}
+  .tutup-info{background:#FFE9E4;border:2px solid var(--cabai);border-radius:16px;padding:12px 14px;margin-top:18px;color:var(--cabai-tua);font-weight:700;display:flex;gap:10px;align-items:center}
+  .tutup-info .ikon{font-size:1.8rem}
+  .tutup-info small{display:block;font-weight:600;color:var(--abu)}
+  .tutup-info[hidden]{display:none}
+  .btn-lanjut:disabled,.btn-wa:disabled{background:#CDBFB1;box-shadow:none;cursor:not-allowed}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
   /* KATEGORI */
@@ -226,7 +244,7 @@
     <div class="dots" id="dots"></div>
   </div>
 </header>
-<div class="pita"><div class="wrap" id="info"></div></div>
+<div class="pita"><div class="wrap"><div id="info" style="display:contents"></div><button class="btn-pasang" id="btnPasang" hidden>📲 Pasang aplikasi AMEERA</button></div></div>
 
 <nav class="tabs" aria-label="Kategori menu"><div class="wrap">
   <div id="tabs"></div>
@@ -237,6 +255,7 @@
 </div></nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<div class="wrap"><div class="tutup-info" id="tutupInfo" hidden role="status"><span class="ikon">🌙</span><div><span id="tutupJudul">Kedai sedang tutup</span><small id="tutupKet"></small></div></div></div>
 <main class="wrap" id="menu"></main>
 
 <footer class="wrap" id="footer"></footer>
@@ -331,85 +350,9 @@
   </div>
 </div>
 
+<script src="menu.js"></script>
 <script>
-/* ============================================================
-   PENGATURAN KEDAI — cukup ubah bagian ini saja
-   ============================================================ */
-const KEDAI = {
-  nama:   "Kedai Jajanan AMEERA",
-  wa:     "62881023089937",          // nomor WA kedai, awali 62 (bukan 0)
-  alamatSingkat: "Graha Purwadadi Village A/9",
-  alamat: "Perumahan Graha Purwadadi Village Blok A No. 9, Blendung, Kec. Purwadadi, Kab. Subang",
-  jam:    "",                        // jam buka, contoh: "Buka 10.00–21.00"
-  ongkir: "Ongkir dikonfirmasi lewat WhatsApp.",
-  // Isi nomor rekening / e-wallet di sini. Kalau kosong, nomor dikirim lewat WhatsApp.
-  // Contoh: rekening: ["DANA 0881xxxxxxx a.n. Nama", "BRI 1234xxxx a.n. Nama"],
-  rekening: [],
-  codAntar: false,                   // false = pesanan antar wajib transfer dulu (anti iseng)
-  gratisOngkir: {makananSaja:4, makanan:3, minuman:2} // gratis ongkir: 4 makanan, ATAU 3 makanan + 2 minuman/cemilan
-};
-
-const RASA = ["Pedas", "Pedas manis", "Asam pedas"];
-const LEVEL = ["Tidak pedas", "Sedikit pedas", "Pedas sedang", "Pedas", "Pedas banget", "Pedas nampol"]; // level 0–5
-// Harga tambahan per topping (isi 0 kalau gratis)
-const TOPPING = [
-  {nama:"Ceker", harga:2000},
-  {nama:"Tulang", harga:2000},
-  {nama:"Siomay kering", harga:2000},
-  {nama:"Cuanki lidah", harga:2000},
-  {nama:"Cikua", harga:2000},
-  {nama:"Baso", harga:2000}
-];
-// Topping yang tersedia untuk tiap menu
-const TP_SEBLAK = ["Ceker","Tulang","Siomay kering","Cuanki lidah","Cikua"];
-const TP_MIE    = [...TP_SEBLAK, "Baso"];
-
-const MENU = [
-  {id:"seblak", judul:"Seblak", sub:"Pilih level pedas 0–5 dan topping", unggulan:true, items:[
-    {id:"sb-ori", nama:"Seblak Original", harga:12000, pilih:true, topping:TP_SEBLAK, rasa:true},
-    {id:"sb-kom", nama:"Seblak Komplit",  harga:20000, pilih:true, topping:TP_SEBLAK, rasa:true}
-  ]},
-  {id:"mieseblak", judul:"Mie Seblak", sub:"Pilih level pedas 0–5 dan topping", unggulan:true, items:[
-    {id:"ms-ori", nama:"Mie Seblak Original", harga:13000, pilih:true, topping:TP_MIE, rasa:true},
-    {id:"ms-kom", nama:"Mie Seblak Komplit",  harga:20000, pilih:true, topping:TP_MIE, rasa:true}
-  ]},
-  {id:"lain", judul:"Makanan Lain", items:[
-    {id:"mg",  nama:"Mie Goreng",     harga:8000},
-    {id:"mk",  nama:"Mie Kuah",       harga:8000},
-    {id:"spt", nama:"Spageti Tulang", harga:15000, pilih:true, ket:"Bisa pilih level pedas"},
-    {id:"lb",  nama:"Lumpia Basah",   harga:15000, pilih:true, ket:"Bisa pilih level pedas"}
-  ]},
-  {id:"cemilan", judul:"Cemilan", minuman:true, items:[
-    {id:"kg", nama:"Kentang Goreng",  harga:7000},
-    {id:"ng", nama:"Nugget",          harga:5000},
-    {id:"bs", nama:"Basreng",         harga:5000},
-    {id:"sg", nama:"Sosis Goreng",    harga:6000},
-    {id:"oo", nama:"Otak-otak",       harga:5000},
-    {id:"tp", nama:"Telor Puyuh",     harga:5000},
-    {id:"ta", nama:"Telor Ayam",      harga:5000},
-    {id:"tt", nama:"Telor Terigu",    harga:5000},
-    {id:"ks", nama:"Kerupuk Sambal",  harga:5000},
-    {id:"cr", nama:"Cireng Sambal",   harga:5000}
-  ]},
-  {id:"dingin", judul:"Minuman Dingin", minuman:true, items:[
-    {id:"am",  nama:"Air Mineral",        harga:3000},
-    {id:"tpk", nama:"Teh Pucuk",          harga:5000},
-    {id:"tj",  nama:"Tea Jus",            harga:3000},
-    {id:"ns",  nama:"Nutrisari",          harga:4000},
-    {id:"mm",  nama:"Marimas",            harga:3000},
-    {id:"tm",  nama:"Es Teh Manis",       harga:3000},
-    {id:"esc", nama:"Es Susu Coklat",     harga:5000},
-    {id:"esp", nama:"Es Susu Putih",      harga:5000},
-    {id:"gd",  nama:"Es Good Day Freeze", harga:5000},
-    {id:"ej",  nama:"Es Jeruk Peras",     harga:5000}
-  ]},
-  {id:"panas", judul:"Minuman Panas", minuman:true, items:[
-    {id:"kp",  nama:"Kopi",              harga:3000},
-    {id:"scp", nama:"Susu Coklat Panas", harga:5000},
-    {id:"spp", nama:"Susu Putih Panas",  harga:5000}
-  ]}
-];
-/* ============================================================ */
+/* Data kedai & menu ada di file menu.js */
 
 const rp = n => "Rp" + n.toLocaleString("id-ID");
 const $ = id => document.getElementById(id);
@@ -419,7 +362,28 @@ let metode = "Ambil di kedai";
 let bayar = "Tunai (COD)";
 
 /* ---------- Render menu ---------- */
-$("info").innerHTML = `<span>📍 ${KEDAI.alamatSingkat}</span>` + (KEDAI.jam ? `<span>🕒 ${KEDAI.jam}</span>` : "") + `<span>🛵 Gratis ongkir: ${KEDAI.gratisOngkir.makananSaja} makanan, atau ${KEDAI.gratisOngkir.makanan} makanan + ${KEDAI.gratisOngkir.minuman} minuman/cemilan</span>`;
+/* ---------- Jam buka (waktu WIB) ---------- */
+const jj = h => String(h).padStart(2,"0") + ".00";
+function menitWIB(){
+  const bag = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Jakarta",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date());
+  const h = +bag.find(x=>x.type==="hour").value % 24, m = +bag.find(x=>x.type==="minute").value;
+  return h*60 + m;
+}
+const sedangBuka = () => { const n = menitWIB(); return n >= KEDAI.jamBuka*60 && n < KEDAI.jamTutup*60; };
+let statusBuka = sedangBuka();
+function renderStatus(){
+  $("statusBuka").className = "status " + (statusBuka ? "buka" : "tutup");
+  $("statusBuka").textContent = statusBuka ? "Buka" : "Tutup";
+  $("tutupInfo").hidden = statusBuka;
+  const besok = menitWIB() >= KEDAI.jamTutup*60;
+  $("tutupJudul").textContent = "Kedai sedang tutup, belum bisa pesan";
+  $("tutupKet").textContent = `Pesanan online dibuka lagi ${besok ? "besok" : "hari ini"} pukul ${jj(KEDAI.jamBuka)} WIB. Menu tetap bisa dilihat.`;
+  $("btnLanjut").disabled = !statusBuka;
+  $("btnLanjut").textContent = statusBuka ? "Checkout" : `Tutup, buka lagi pukul ${jj(KEDAI.jamBuka)}`;
+  $("btnKirim").disabled = !statusBuka;
+}
+
+$("info").innerHTML = `<span>📍 ${KEDAI.alamatSingkat}</span><span>🕒 ${jj(KEDAI.jamBuka)}–${jj(KEDAI.jamTutup)} <span class="status" id="statusBuka"></span></span>` + `<span>🛵 Gratis ongkir: ${KEDAI.gratisOngkir.makananSaja} makanan, atau ${KEDAI.gratisOngkir.makanan} makanan + ${KEDAI.gratisOngkir.minuman} minuman/cemilan</span>`;
 $("footer").innerHTML = `<b>${KEDAI.nama}</b>${KEDAI.alamat}`;
 $("tabs").innerHTML = MENU.map((k,i) => `<a href="#${k.id}" class="${i?"":"on"}">${k.judul}</a>`).join("");
 $("menu").innerHTML = MENU.map(k => `
@@ -436,7 +400,9 @@ function renderAksi(){
   Object.values(semuaItem).forEach(i => {
     const el = $("aksi-"+i.id);
     const qty = keranjang.filter(b => b.id===i.id).reduce((s,b)=>s+b.qty,0);
-    if (i.pilih) {
+    if (!statusBuka) {
+      el.innerHTML = `<button class="btn-tambah" disabled>Tutup</button>`;
+    } else if (i.pilih) {
       el.innerHTML = `<button class="btn-tambah" data-pilih="${i.id}">${qty?`+ Lagi (${qty})`:"Pilih"}</button>`;
     } else if (qty) {
       el.innerHTML = `<div class="stepper"><button data-min="${i.id}" aria-label="Kurangi ${i.nama}">−</button><span>${qty}</span><button data-plus="${i.id}" aria-label="Tambah ${i.nama}">+</button></div>`;
@@ -464,6 +430,7 @@ const teksSisa = k => [k.makanan?`<b>${k.makanan} makanan</b>`:"", k.minuman?`<b
 const totalSemua = () => keranjang.reduce((s,b)=>s+hargaSatuan(b)*b.qty,0);
 
 function tambahSimple(id, d){
+  if (d>0 && !statusBuka) return;
   let b = keranjang.find(x => x.key===id);
   if (!b && d>0) keranjang.push(b = {key:id, id, qty:0, level:null, topping:[]});
   if (b) b.qty += d;
@@ -482,7 +449,8 @@ function kabari(teks){
 function segarkan(){
   renderAksi();
   const jml = keranjang.reduce((s,b)=>s+b.qty,0);
-  $("bar").classList.toggle("show", jml>0);
+  $("bar").classList.toggle("show", jml>0 && statusBuka);
+  renderStatus();
   $("barJumlah").textContent = jml + " item";
   $("barTotal").textContent = rp(totalSemua());
   $("badge").textContent = jml; $("badge").hidden = !jml;
@@ -501,6 +469,7 @@ document.addEventListener("click", e => {
 /* ---------- Sheet pilih level & topping ---------- */
 let pilih = {id:null, rasa:null, level:3, topping:[], qty:1};
 function bukaPilih(id){
+  if (!statusBuka) return;
   const i = semuaItem[id];
   pilih = {id, rasa: i.rasa ? RASA[0] : null, level:3, topping:[], qty:1};
   $("pilihJudul").textContent = i.nama;
@@ -583,6 +552,7 @@ $("btnKeranjang").onclick = bukaKeranjang;
 $("btnCart").onclick = bukaKeranjang;
 $("btnBelanja").onclick = tutupSemua;
 $("btnLanjut").onclick = () => {
+  if (!sedangBuka()) { statusBuka = false; segarkan(); return; }
   $("blokCheckout").hidden = false; $("btnLanjut").hidden = true;
   $("blokCheckout").scrollIntoView({behavior:"smooth", block:"start"});
   setTimeout(() => $("fNama").focus({preventScroll:true}), 400);
@@ -620,6 +590,8 @@ renderBayar();
 
 /* ---------- Kirim ke WhatsApp ---------- */
 $("btnKirim").onclick = () => {
+  statusBuka = sedangBuka();
+  if (!statusBuka) { segarkan(); $("err").textContent = `Maaf, kedai sudah tutup. Pesan lagi besok mulai pukul ${jj(KEDAI.jamBuka)} WIB.`; return; }
   const nama = $("fNama").value.trim(), alamat = $("fAlamat").value.trim(), cat = $("fCatatan").value.trim();
   if (!nama) { $("err").textContent = "Isi nama pemesan dulu."; $("fNama").focus(); return; }
   if (metode==="Diantar" && !alamat) { $("err").textContent = "Isi alamat antar dulu."; $("fAlamat").focus(); return; }
@@ -673,6 +645,24 @@ document.querySelectorAll("section.kat").forEach(s => pengamat.observe(s));
   box.addEventListener("touchstart", mulai, {passive:true});
   tandai(); mulai();
 })();
+
+// Cek jam buka setiap 30 detik (kalau halaman dibiarkan terbuka)
+setInterval(() => { const b = sedangBuka(); if (b !== statusBuka) { statusBuka = b; segarkan(); } }, 30000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { statusBuka = sedangBuka(); segarkan(); } });
+
+/* ---------- Aplikasi (PWA) ---------- */
+if ("serviceWorker" in navigator) {
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+let promptPasang = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); promptPasang = e; $("btnPasang").hidden = false; });
+$("btnPasang").onclick = async () => {
+  if (!promptPasang) return;
+  promptPasang.prompt();
+  await promptPasang.userChoice;
+  promptPasang = null; $("btnPasang").hidden = true;
+};
+addEventListener("appinstalled", () => { $("btnPasang").hidden = true; kabari("✓ Aplikasi AMEERA terpasang"); });
 
 segarkan();
 </script>
