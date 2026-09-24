@@ -421,8 +421,18 @@
 <div id="areaCetak"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="menu.js"></script>
-<script src="toko.js"></script>
+<script src="menu.js?v=7"></script>
+<script>
+/* Nilai cadangan: website tetap jalan walau menu.js versi lama masih tersimpan di cache */
+KEDAI.bonusShare = KEDAI.bonusShare || { maks: 5000 };
+KEDAI.voucher = KEDAI.voucher || { jumlah: 10, minBelanja: 10000, berlakuHari: 60, hadiah: ["sb-ori", "ms-ori"] };
+KEDAI.gratisOngkir = KEDAI.gratisOngkir || { makananSaja: 4, makanan: 3, minuman: 2 };
+KEDAI.instagram = KEDAI.instagram || "";
+KEDAI.rekening = KEDAI.rekening || [];
+KEDAI.jamBuka = KEDAI.jamBuka ?? 10; KEDAI.jamTutup = KEDAI.jamTutup ?? 18;
+KEDAI.api = KEDAI.api || "https://script.google.com/macros/s/AKfycbyWFdxY-Okd7YjSLrnfv0rvIZXD4Cf9kwlbzmYnPsZHJJ5fAHzXGOk3uuXV3k4VOc2M/exec";
+</script>
+<script src="toko.js?v=7"></script>
 <script>
 /* ===================== DASAR ===================== */
 const $ = id => document.getElementById(id);
