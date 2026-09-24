@@ -24,7 +24,7 @@ const KEDAI = {
   gratisOngkir: {makananSaja:4, makanan:3, minuman:2} // gratis ongkir: 4 makanan, ATAU 3 makanan + 2 minuman/cemilan
 };
 
-const RASA = ["Pedas", "Pedas manis", "Asam pedas"];
+const RASA = ["Pedas", "Asam manis", "Pedas manis"];
 const LEVEL = ["Tidak pedas", "Sedikit pedas", "Pedas sedang", "Pedas", "Pedas banget", "Pedas nampol"]; // level 0–5
 // Harga tambahan per topping (isi 0 kalau gratis)
 const TOPPING = [
@@ -33,16 +33,21 @@ const TOPPING = [
   {nama:"Siomay kering", harga:2000},
   {nama:"Cuanki lidah", harga:2000},
   {nama:"Cikua", harga:2000},
-  {nama:"Baso", harga:2000}
+  {nama:"Baso", harga:2000},
+  {nama:"Dumpling ayam", harga:2000},
+  {nama:"Dumpling keju", harga:2000},
+  {nama:"Udang", harga:2000},
+  {nama:"Pilus", harga:2000}
 ];
 // Topping yang tersedia untuk tiap menu
-const TP_SEBLAK = ["Ceker","Tulang","Siomay kering","Cuanki lidah","Cikua"];
+const TP_SEBLAK = ["Ceker","Tulang","Siomay kering","Cuanki lidah","Cikua","Dumpling ayam","Dumpling keju","Udang","Pilus"];
 const TP_MIE    = [...TP_SEBLAK, "Baso"];
 
 const MENU = [
   {id:"seblak", judul:"Seblak", sub:"Pilih level pedas 0–5 dan topping", unggulan:true, items:[
     {id:"sb-ori", nama:"Seblak Original", harga:12000, pilih:true, topping:TP_SEBLAK, rasa:true},
-    {id:"sb-kom", nama:"Seblak Komplit",  harga:20000, pilih:true, topping:TP_SEBLAK, rasa:true}
+    {id:"sb-kom", nama:"Seblak Komplit",  harga:20000, pilih:true, topping:TP_SEBLAK, rasa:true},
+    {id:"sb-sea", nama:"Seblak Seafood",  harga:20000, pilih:true, topping:TP_SEBLAK, rasa:true}
   ]},
   {id:"mieseblak", judul:"Mie Seblak", sub:"Pilih level pedas 0–5 dan topping", unggulan:true, items:[
     {id:"ms-ori", nama:"Mie Seblak Original", harga:13000, pilih:true, topping:TP_MIE, rasa:true},

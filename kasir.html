@@ -340,7 +340,7 @@
         </div>
         <span class="label">Pilihan untuk pembeli</span>
         <label class="cek"><input type="checkbox" id="mLevel"> Level pedas 0–5</label>
-        <label class="cek"><input type="checkbox" id="mRasa"> Rasa (pedas, pedas manis, asam pedas)</label>
+        <label class="cek"><input type="checkbox" id="mRasa"> Rasa (pedas, asam manis, pedas manis)</label>
         <span class="label">Topping</span>
         <select id="mTp">
           <option value="">Tanpa topping</option>
@@ -350,6 +350,21 @@
         <div class="err" id="mErr"></div>
         <button class="btn lebar" id="mTambah">Tambahkan ke daftar</button>
         <p class="kecil" style="margin-top:8px">Menu baru muncul di website dan kasir setelah kamu menekan <b>Simpan pengaturan toko</b>.</p>
+      </div>
+
+      <div class="kartu">
+        <h2>🧀 Tambah topping baru</h2>
+        <div class="dua">
+          <div><span class="label">Nama topping</span><input type="text" id="tpNama" placeholder="Contoh: Sosis"></div>
+          <div><span class="label">Harga</span><input type="number" id="tpHarga" inputmode="numeric" min="0" step="500" placeholder="2000"></div>
+        </div>
+        <span class="label">Tersedia untuk</span>
+        <select id="tpUntuk">
+          <option value="semua">Seblak &amp; Mie Seblak</option>
+          <option value="mie">Mie Seblak saja</option>
+        </select>
+        <div class="err" id="tpErr"></div>
+        <button class="btn lebar" id="tpTambah">Tambahkan topping</button>
       </div>
 
       <div class="kartu">
@@ -447,7 +462,7 @@
 <div id="areaCetak"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="menu.js?v=8"></script>
+<script src="menu.js?v=10"></script>
 <script>
 /* Nilai cadangan: website tetap jalan walau menu.js versi lama masih tersimpan di cache */
 KEDAI.bonusShare = KEDAI.bonusShare || { maks: 5000 };
@@ -458,7 +473,7 @@ KEDAI.rekening = KEDAI.rekening || [];
 KEDAI.jamBuka = KEDAI.jamBuka ?? 10; KEDAI.jamTutup = KEDAI.jamTutup ?? 18;
 KEDAI.api = KEDAI.api || "https://script.google.com/macros/s/AKfycbyWFdxY-Okd7YjSLrnfv0rvIZXD4Cf9kwlbzmYnPsZHJJ5fAHzXGOk3uuXV3k4VOc2M/exec";
 </script>
-<script src="toko.js?v=8"></script>
+<script src="toko.js?v=10"></script>
 <script>
 /* ===================== DASAR ===================== */
 const $ = id => document.getElementById(id);
@@ -836,14 +851,15 @@ function renderToko(){
 function renderStokList(){
   const baris = (key, nama, harga, asli, hKey, baru) => `
     <div class="baris-stok">
-      <b>${nama}${baru?`<span class="tag-baru">BARU</span><button class="hapus-menu" data-hapus="${key}">Hapus menu</button>`:""}</b>
+      <b>${nama}${baru?`<span class="tag-baru">BARU</span><button class="hapus-menu" data-hapus="${key}">${key.startsWith("tp:")?"Hapus topping":"Hapus menu"}</button>`:""}</b>
       <input type="number" inputmode="numeric" min="0" step="500" data-h="${hKey}" data-k="${key}" value="${harga}" class="${harga!==asli?"ubah":""}" aria-label="Harga ${nama}">
       <button class="stok${draf.habis.includes(key)?" habis":""}" data-s="${key}">${draf.habis.includes(key)?"Habis":"Tersedia"}</button>
     </div>`;
   $("tMenu").innerHTML = MENU.map(k => `<div class="kat-judul">${k.judul}</div>`
       + k.items.filter(i => !i.tambahan).map(i => baris(i.id, i.nama, i.harga, HARGA_ASLI[i.id], "harga")).join("")
       + (draf.menuBaru||[]).filter(m => m.kat===k.id).map(m => baris(m.id, m.nama, +m.harga, +m.harga, "baru", true)).join("")).join("")
-    + `<div class="kat-judul">Topping</div>` + TOPPING.map(t => baris("tp:"+t.nama, t.nama, t.harga, HARGA_TP_ASLI[t.nama], "hargaTp")).join("");
+    + `<div class="kat-judul">Topping</div>` + TOPPING.filter(t => !t.tambahan).map(t => baris("tp:"+t.nama, t.nama, t.harga, HARGA_TP_ASLI[t.nama], "hargaTp")).join("")
+    + (draf.toppingBaru||[]).map(t => baris("tp:"+t.nama, t.nama + (t.untuk==="mie" ? " (mie)" : ""), +t.harga, +t.harga, "tpbaru", true)).join("");
 }
 function renderTokoStatus(){
   pilihTombol("tStatus", draf.status);
@@ -862,6 +878,14 @@ $("tTutup").oninput = () => { draf.jamTutup = +$("tTutup").value; tandaiUbah(); 
 $("tPengumuman").oninput = () => { draf.pengumuman = $("tPengumuman").value; tandaiUbah(); };
 $("tMenu").addEventListener("click", e => {
   const h = e.target.closest("button[data-hapus]");
+  if (h && h.dataset.hapus.startsWith("tp:")) {
+    const nama = h.dataset.hapus.slice(3);
+    if (confirm(`Hapus topping "${nama}"?`)) {
+      draf.toppingBaru = (draf.toppingBaru||[]).filter(t => t.nama!==nama); draf.habis = draf.habis.filter(x => x!==h.dataset.hapus);
+      delete draf.hargaTp[nama]; renderStokList(); tandaiUbah();
+    }
+    return;
+  }
   if (h) {
     const m = draf.menuBaru.find(x => x.id===h.dataset.hapus);
     if (m && confirm(`Hapus menu "${m.nama}"?`)) {
@@ -877,6 +901,7 @@ $("tMenu").addEventListener("click", e => {
 });
 $("tMenu").addEventListener("input", e => {
   const inp = e.target.closest("input[data-h]"); if (!inp) return;
+  if (inp.dataset.h === "tpbaru") { const t = (draf.toppingBaru||[]).find(x => "tp:"+x.nama===inp.dataset.k); if (t) t.harga = +inp.value || 0; tandaiUbah(); return; }
   if (inp.dataset.h === "baru") { const m = draf.menuBaru.find(x => x.id===inp.dataset.k); if (m) m.harga = +inp.value || 0; tandaiUbah(); return; }
   const k = inp.dataset.k.replace(/^tp:/,""), grup = inp.dataset.h;
   const asli = grup==="harga" ? HARGA_ASLI[k] : HARGA_TP_ASLI[k];
@@ -894,6 +919,18 @@ $("mTambah").onclick = () => {
     level: $("mLevel").checked, rasa: $("mRasa").checked, topping: $("mTp").value });
   ["mNama","mHarga"].forEach(id => $(id).value = ""); $("mLevel").checked = $("mRasa").checked = false; $("mTp").value = "";
   renderStokList(); tandaiUbah(); kabari(`✓ ${nama} ditambahkan. Tekan Simpan pengaturan toko.`);
+};
+$("tpTambah").onclick = () => {
+  const nama = $("tpNama").value.trim().replace(/\s+/g," "), harga = +$("tpHarga").value;
+  $("tpErr").textContent = "";
+  if (!nama) { $("tpErr").textContent = "Isi nama topping dulu."; return; }
+  if (!($("tpHarga").value !== "" && harga >= 0)) { $("tpErr").textContent = "Isi harga topping (0 kalau gratis)."; return; }
+  const ada = n => n.toLowerCase()===nama.toLowerCase();
+  if (TOPPING.some(t => !t.tambahan && ada(t.nama)) || (draf.toppingBaru||[]).some(t => ada(t.nama))) { $("tpErr").textContent = "Topping itu sudah ada."; return; }
+  draf.toppingBaru = draf.toppingBaru || [];
+  draf.toppingBaru.push({ nama, harga, untuk: $("tpUntuk").value });
+  $("tpNama").value = ""; $("tpHarga").value = ""; $("tpUntuk").value = "semua";
+  renderStokList(); tandaiUbah(); kabari(`✓ Topping ${nama} ditambahkan. Tekan Simpan pengaturan toko.`);
 };
 $("tSemuaAda").onclick = () => { draf.habis = []; document.querySelectorAll("#tMenu .stok").forEach(b => { b.classList.remove("habis"); b.textContent="Tersedia"; }); tandaiUbah(); };
 $("tSimpan").onclick = async () => {

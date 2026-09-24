@@ -4,14 +4,27 @@
    diatur dari tab "Toko" di aplikasi kasir, disimpan di Google Sheets.
    File ini dipakai bersama oleh index.html dan kasir.html.
    ============================================================ */
-const TOKO_DEFAULT = { status: "otomatis", pesanTutup: "", jamBuka: KEDAI.jamBuka, jamTutup: KEDAI.jamTutup, habis: [], harga: {}, hargaTp: {}, pengumuman: "", menuBaru: [] };
+const TOKO_DEFAULT = { status: "otomatis", pesanTutup: "", jamBuka: KEDAI.jamBuka, jamTutup: KEDAI.jamTutup, habis: [], harga: {}, hargaTp: {}, pengumuman: "", menuBaru: [], toppingBaru: [] };
 const HARGA_ASLI = {}; MENU.forEach(k => k.items.forEach(i => HARGA_ASLI[i.id] = i.harga));
 const HARGA_TP_ASLI = {}; TOPPING.forEach(t => HARGA_TP_ASLI[t.nama] = t.harga);
+const TP_ASLI_SEBLAK = typeof TP_SEBLAK !== "undefined" ? [...TP_SEBLAK] : [];
+const TP_ASLI_MIE = typeof TP_MIE !== "undefined" ? [...TP_MIE] : [];
 let TOKO = { ...TOKO_DEFAULT };
 
 function terapkanToko(s) {
   TOKO = { ...TOKO_DEFAULT, ...(s || {}) };
   KEDAI.jamBuka = +TOKO.jamBuka; KEDAI.jamTutup = +TOKO.jamTutup;
+  // Topping tambahan (dibuat dari tab Toko di kasir)
+  for (let n = TOPPING.length - 1; n >= 0; n--) if (TOPPING[n].tambahan) TOPPING.splice(n, 1);
+  if (typeof TP_SEBLAK !== "undefined") { TP_SEBLAK.length = 0; TP_SEBLAK.push(...TP_ASLI_SEBLAK); }
+  if (typeof TP_MIE !== "undefined") { TP_MIE.length = 0; TP_MIE.push(...TP_ASLI_MIE); }
+  (TOKO.toppingBaru || []).forEach(t => {
+    if (!t.nama || TOPPING.some(x => x.nama === t.nama)) return;
+    TOPPING.push({ nama: t.nama, harga: +t.harga || 0, tambahan: true });
+    HARGA_TP_ASLI[t.nama] = +t.harga || 0;
+    if (t.untuk !== "mie" && typeof TP_SEBLAK !== "undefined") TP_SEBLAK.push(t.nama);
+    if (typeof TP_MIE !== "undefined") TP_MIE.push(t.nama);
+  });
   // Menu tambahan (dibuat dari tab Toko di kasir)
   MENU.forEach(k => { k.items = k.items.filter(i => !i.tambahan); });
   (TOKO.menuBaru || []).forEach(m => {
