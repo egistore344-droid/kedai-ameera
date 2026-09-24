@@ -403,7 +403,7 @@
   </div>
 </div>
 
-<script src="menu.js?v=7"></script>
+<script src="menu.js?v=8"></script>
 <script>
 /* Nilai cadangan: website tetap jalan walau menu.js versi lama masih tersimpan di cache */
 KEDAI.bonusShare = KEDAI.bonusShare || { maks: 5000 };
@@ -414,13 +414,15 @@ KEDAI.rekening = KEDAI.rekening || [];
 KEDAI.jamBuka = KEDAI.jamBuka ?? 10; KEDAI.jamTutup = KEDAI.jamTutup ?? 18;
 KEDAI.api = KEDAI.api || "https://script.google.com/macros/s/AKfycbyWFdxY-Okd7YjSLrnfv0rvIZXD4Cf9kwlbzmYnPsZHJJ5fAHzXGOk3uuXV3k4VOc2M/exec";
 </script>
-<script src="toko.js?v=7"></script>
+<script src="toko.js?v=8"></script>
 <script>
 /* Data kedai & menu ada di file menu.js */
 
 const rp = n => "Rp" + n.toLocaleString("id-ID");
 const $ = id => document.getElementById(id);
-const semuaItem = {}; MENU.forEach(k => k.items.forEach(i => { i.minuman = !!k.minuman; semuaItem[i.id] = i; }));
+const semuaItem = {};
+function bangunItem(){ for (const k in semuaItem) delete semuaItem[k]; MENU.forEach(k => k.items.forEach(i => { i.minuman = !!k.minuman; semuaItem[i.id] = i; })); }
+bangunItem();
 let keranjang = []; // {key, id, qty, level, topping[]}
 let metode = "Ambil di kedai";
 let bayar = "Tunai (COD)";
@@ -460,6 +462,7 @@ $("info").innerHTML = `<span>📍 ${KEDAI.alamatSingkat}</span><span>🕒 ${jj(K
 }
 renderInfo();
 $("footer").innerHTML = `<b>${KEDAI.nama}</b>${KEDAI.alamat}`;
+function renderMenuHTML(){
 $("tabs").innerHTML = MENU.map((k,i) => `<a href="#${k.id}" class="${i?"":"on"}">${k.judul}</a>`).join("");
 $("menu").innerHTML = MENU.map(k => `
   <section class="kat ${k.unggulan?"unggulan":""}" id="${k.id}">
@@ -470,6 +473,8 @@ $("menu").innerHTML = MENU.map(k => `
         <div id="aksi-${i.id}"></div>
       </div>`).join("")}</div>
   </section>`).join("");
+}
+renderMenuHTML();
 
 function renderAksi(){
   Object.values(semuaItem).forEach(i => {
@@ -739,13 +744,14 @@ document.addEventListener("keydown", e => { if(e.key==="Escape") tutupSemua(); }
 const tabs = [...document.querySelectorAll(".tabs a")];
 const pengamat = new IntersectionObserver(es => es.forEach(en => {
   if (!en.isIntersecting) return;
-  tabs.forEach(a => {
+  document.querySelectorAll(".tabs a").forEach(a => {
     const on = a.getAttribute("href")==="#"+en.target.id;
     a.classList.toggle("on", on);
     if (on) { const w=a.parentElement; w.scrollTo({left: a.offsetLeft - (w.clientWidth - a.offsetWidth)/2, behavior:"smooth"}); }
   });
 }), {rootMargin:"-45% 0px -50% 0px"});
-document.querySelectorAll("section.kat").forEach(s => pengamat.observe(s));
+function amati(){ pengamat.disconnect(); document.querySelectorAll("section.kat").forEach(s => pengamat.observe(s)); }
+amati();
 
 /* ---------- Slider banner ---------- */
 (function(){
@@ -765,7 +771,10 @@ document.querySelectorAll("section.kat").forEach(s => pengamat.observe(s));
 
 // Ambil pengaturan toko terbaru (status, stok, harga, pengumuman)
 async function segarkanToko(){
-  if (await ambilToko()) { renderInfo(); renderBonus(); statusBuka = sedangBuka(); segarkan(); }
+  if (await ambilToko()) {
+    bangunItem(); keranjang = keranjang.filter(b => semuaItem[b.id]);
+    renderMenuHTML(); amati(); renderInfo(); renderBonus(); statusBuka = sedangBuka(); segarkan();
+  }
 }
 segarkanToko();
 setInterval(segarkanToko, 60000);
