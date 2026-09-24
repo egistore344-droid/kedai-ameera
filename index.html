@@ -98,6 +98,7 @@
   .tutup-info[hidden]{display:none}
   .pengumuman{background:var(--kerupuk);color:var(--coklat);font-weight:800;text-align:center;padding:9px 16px;font-size:.92rem;border-bottom:2px solid var(--coklat)}
   .pengumuman[hidden]{display:none}
+  #btnIkutiFb[hidden]{display:none}
   .item.habis .nm b,.item.habis .pr{opacity:.5}
   .tp-row.habis{opacity:.5}
   .tp-row.habis small::after{content:" · Habis";color:var(--cabai)}
@@ -266,7 +267,7 @@
         <span class="tenda"></span>
         <div>
           <h2>Share &amp;<br>Dapat&nbsp;Gratis!</h2>
-          <span class="pil">Share di WA/IG &amp; tag<br>Kedai Jajanan AMEERA</span>
+          <span class="pil">Share di WA/IG/FB &amp; tag<br>Kedai Jajanan AMEERA</span>
         </div>
         <div class="gambar">📸<span class="stiker">GRATIS!</span></div>
       </button>
@@ -332,7 +333,9 @@
     <ol class="langkah" id="shareLangkah"></ol>
     <span class="label">Pilih caption, salin, lalu tempel saat posting</span>
     <div id="shareCaption"></div>
-    <button class="btn-wa" id="btnBagikan" style="background:var(--coklat)">📤 Bagikan sekarang</button>
+    <button class="btn-wa" id="btnBagikan" style="background:var(--coklat)">📤 Bagikan ke WA / Instagram</button>
+    <button class="btn-wa" id="btnFb" style="background:#1877F2;margin-top:10px">👍 Bagikan ke Facebook</button>
+    <a class="btn-wa" id="btnIkutiFb" target="_blank" rel="noopener" style="background:#fff;color:#1877F2;border:2px solid #1877F2;margin-top:10px;text-decoration:none" hidden>➕ Ikuti halaman Facebook Kedai Jajanan AMEERA</a>
     <button class="btn-lanjut" id="btnMulaiPesan">Mulai pesan</button>
     <p class="syarat" id="shareSyarat"></p>
   </div>
@@ -378,9 +381,13 @@
     </div>
     <p class="catatan-ongkir" id="ketBayar" style="margin-top:8px"></p>
 
+    <label class="label" for="fKupon">🎫 Kode kupon brosur <em>(opsional)</em></label>
+    <input type="text" id="fKupon" placeholder="Contoh: AM-7K3QX" autocomplete="off" style="text-transform:uppercase;letter-spacing:1px">
+    <p class="catatan-ongkir" id="ketKupon" style="margin-top:6px"></p>
+
     <label class="bonus" for="fBonus">
       <input type="checkbox" id="fBonus">
-      <span><b>🎁 Klaim bonus share</b><small>Saya sudah share di WA/Instagram dan tag Kedai Jajanan AMEERA. Bukti screenshot saya kirim lewat WhatsApp.</small></span>
+      <span><b>🎁 Klaim bonus share</b><small>Saya sudah share di WA/Instagram/Facebook dan tag Kedai Jajanan AMEERA. Bukti screenshot saya kirim lewat WhatsApp.</small></span>
     </label>
     <div id="blokBonus" hidden>
       <select id="fBonusItem" aria-label="Pilih minuman atau cemilan gratis"></select>
@@ -403,18 +410,20 @@
   </div>
 </div>
 
-<script src="menu.js?v=10"></script>
+<script src="menu.js?v=13"></script>
 <script>
 /* Nilai cadangan: website tetap jalan walau menu.js versi lama masih tersimpan di cache */
 KEDAI.bonusShare = KEDAI.bonusShare || { maks: 5000 };
+KEDAI.kuponBrosur = KEDAI.kuponBrosur || { hadiah: "tm", berlaku: "2026-10-31" };
 KEDAI.voucher = KEDAI.voucher || { jumlah: 10, minBelanja: 10000, berlakuHari: 60, hadiah: ["sb-ori", "ms-ori"] };
 KEDAI.gratisOngkir = KEDAI.gratisOngkir || { makananSaja: 4, makanan: 3, minuman: 2 };
 KEDAI.instagram = KEDAI.instagram || "";
+KEDAI.facebook = KEDAI.facebook || "";
 KEDAI.rekening = KEDAI.rekening || [];
 KEDAI.jamBuka = KEDAI.jamBuka ?? 10; KEDAI.jamTutup = KEDAI.jamTutup ?? 18;
 KEDAI.api = KEDAI.api || "https://script.google.com/macros/s/AKfycbyWFdxY-Okd7YjSLrnfv0rvIZXD4Cf9kwlbzmYnPsZHJJ5fAHzXGOk3uuXV3k4VOc2M/exec";
 </script>
-<script src="toko.js?v=10"></script>
+<script src="toko.js?v=13"></script>
 <script>
 /* Data kedai & menu ada di file menu.js */
 
@@ -676,6 +685,8 @@ renderBayar();
 /* ---------- Kirim ke WhatsApp ---------- */
 $("btnKirim").onclick = () => {
   statusBuka = sedangBuka();
+  const kodeKupon = $("fKupon").value.trim();
+  if (kodeKupon && !kuponSah(kodeKupon)) { $("err").textContent = "Kode kupon tidak valid. Cek lagi kode di brosur."; $("fKupon").focus(); return; }
   const habisDiKeranjang = keranjang.filter(b => semuaItem[b.id].habis || b.topping.some(t => TOPPING.find(x=>x.nama===t.nama)?.habis)).map(b => semuaItem[b.id].nama);
   if (habisDiKeranjang.length) { $("err").textContent = `Maaf, ${[...new Set(habisDiKeranjang)].join(", ")} (atau toppingnya) sedang habis. Hapus dulu dari keranjang.`; return; }
   if (!statusBuka) { segarkan(); $("err").textContent = `Maaf, kedai sudah tutup. Pesan lagi besok mulai pukul ${jj(KEDAI.jamBuka)} WIB.`; return; }
@@ -694,10 +705,31 @@ $("btnKirim").onclick = () => {
   t += `Nama: ${nama}\nCara ambil: ${metode}\nCara bayar: ${bayar}\n`;
   if (metode==="Diantar") t += `Alamat: ${alamat}\n` + (dapatGratis() ? `Ongkir: GRATIS (${hitung(false)} makanan${hitung(true)?` + ${hitung(true)} minuman/cemilan`:""})\n` : `(Ongkir menyusul)\n`);
   if (cat) t += `Catatan: ${cat}\n`;
+  if (kodeKupon) t += `\n🎫 *Kupon brosur:* ${rapikanKupon(kodeKupon)} (Gratis 1 ${semuaItem[KEDAI.kuponBrosur.hadiah]?.nama || "minuman"})\n`;
   if ($("fBonus").checked) t += `\n🎁 *Klaim bonus share:* ${$("fBonusItem").value} (GRATIS)\nBukti screenshot share saya kirim setelah pesan ini.\n`;
   if (metode==="Diantar") t += `\nSaya kirim share lokasi setelah pesan ini.\n`;
 
   window.open(`https://wa.me/${KEDAI.wa}?text=${encodeURIComponent(t)}`, "_blank");
+};
+
+/* Kupon brosur: format AM-XXXXX (3 huruf acak + 2 huruf cek) */
+const KUPON_ALFA = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+function rapikanKupon(t){ t = String(t||"").toUpperCase().replace(/[^0-9A-Z]/g,""); if (t.startsWith("AM")) t = t.slice(2); return t.length===5 ? "AM-"+t : ""; }
+function kuponSah(kode){
+  const k = rapikanKupon(kode); if (!k) return false;
+  const t = k.slice(3);
+  if ([...t].some(c => !KUPON_ALFA.includes(c))) return false;
+  const v = [...t.slice(0,3)].map(c => KUPON_ALFA.indexOf(c));
+  const a = (17 + v.reduce((s,x,i) => s + (i*2+3)*(x+1), 0)) % 32;
+  const b = (5 + v.reduce((s,x,i) => s + (i*4+1)*(x+3)*(x+1), 0) + a*11) % 32;
+  return KUPON_ALFA[a] === t[3] && KUPON_ALFA[b] === t[4];
+}
+$("fKupon").oninput = () => {
+  const v = $("fKupon").value.trim(), el = $("ketKupon");
+  if (!v) { el.textContent = ""; return; }
+  const ok = kuponSah(v);
+  el.style.color = ok ? "var(--daun)" : "var(--cabai)";
+  el.textContent = ok ? `✓ Kupon valid: gratis 1 ${semuaItem[KEDAI.kuponBrosur.hadiah]?.nama || "minuman"} (dicek kasir saat konfirmasi).` : (rapikanKupon(v) ? "✗ Kode kupon tidak valid." : "Kode terdiri dari AM- dan 5 huruf/angka.");
 };
 
 /* ---------- Promo share & dapat gratis ---------- */
@@ -711,13 +743,14 @@ const CAPTION = [
 ];
 $("shareSub").textContent = `Dapat 1 minuman atau cemilan GRATIS (maks. ${rp(KEDAI.bonusShare.maks)}) cukup dengan share kedai kami.`;
 $("shareLangkah").innerHTML = [
-  `Posting di <b>Status WhatsApp</b> atau <b>Story/Feed Instagram</b>, boleh foto pesananmu atau link website ini.`,
+  `Posting di <b>Facebook</b>, <b>Status WhatsApp</b>, atau <b>Story/Feed Instagram</b>, boleh foto pesananmu atau link website ini.`,
   `Pakai salah satu caption di bawah dan <b>tag ${TAG}</b>.`,
+  `<b>Khusus Facebook:</b> <b>ikuti (follow) halaman Kedai Jajanan AMEERA</b>, lalu <b>tandai halamannya</b> di postingan: ketik <b>@Kedai Jajanan AMEERA</b> dan pilih halamannya sampai namanya berwarna biru.`,
   `Saat checkout, centang <b>🎁 Klaim bonus share</b> lalu pilih minuman/cemilan gratismu.`,
   `Kirim <b>screenshot postinganmu</b> di WhatsApp kedai setelah pesan terkirim.`
 ].map(x => `<li><span>${x}</span></li>`).join("");
 $("shareCaption").innerHTML = CAPTION.map((c,n) => `<div class="caption">${c}<button data-cap="${n}">Salin caption</button></div>`).join("");
-$("shareSyarat").textContent = `Syarat: 1 bonus per pesanan, postingan tidak dihapus minimal 24 jam, berlaku saat kedai buka. Bonus diberikan setelah bukti dicek admin.`;
+$("shareSyarat").textContent = `Syarat: 1 bonus per pesanan, postingan tidak dihapus minimal 24 jam, berlaku saat kedai buka. Untuk Facebook wajib follow & tandai halaman Kedai Jajanan AMEERA. Bonus diberikan setelah bukti dicek admin.`;
 const renderBonus = () => { $("fBonusItem").innerHTML = itemBonus().map(i => `<option>${i.nama}</option>`).join(""); };
 renderBonus();
 $("shareCaption").onclick = async e => {
@@ -730,6 +763,12 @@ $("btnBagikan").onclick = async () => {
   if (navigator.share) { try { await navigator.share({title: KEDAI.nama, text: teks}); } catch(err){} }
   else window.open("https://wa.me/?text=" + encodeURIComponent(teks), "_blank");
 };
+$("btnFb").onclick = async () => {
+  // Facebook tidak mengizinkan teks otomatis, jadi caption disalin dulu lalu tinggal ditempel
+  try { await navigator.clipboard.writeText(CAPTION[0]); kabari("✓ Caption disalin. Tempel di postingan Facebook & tandai @Kedai Jajanan AMEERA"); } catch(err) {}
+  setTimeout(() => window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(URL_WEB), "_blank"), 400);
+};
+if (KEDAI.facebook) { $("btnIkutiFb").href = KEDAI.facebook; $("btnIkutiFb").hidden = false; }
 $("slideShare").onclick = () => buka("sheetShare");
 $("btnMulaiPesan").onclick = () => { tutupSemua(); document.getElementById("seblak").scrollIntoView({behavior:"smooth"}); };
 $("fBonus").onchange = () => { $("blokBonus").hidden = !$("fBonus").checked; };

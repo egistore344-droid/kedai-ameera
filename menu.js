@@ -19,7 +19,10 @@ const KEDAI = {
   bonusShare: { maks: 5000 },
   // Voucher di struk: kumpulkan sejumlah struk, tukar 1 menu gratis
   voucher: { jumlah: 10, minBelanja: 10000, berlakuHari: 60, hadiah: ["sb-ori", "ms-ori"] },
+  // Kupon brosur: setiap brosur punya kode unik, bisa ditukar 1x
+  kuponBrosur: { hadiah: "tm", berlaku: "2026-10-31" },
   instagram: "",                     // username IG kedai tanpa @ (kosongkan kalau belum ada)
+  facebook: "",                      // link halaman Facebook kedai, contoh: "https://facebook.com/kedaijajananameera"
   codAntar: false,                   // false = pesanan antar wajib transfer dulu (anti iseng)
   gratisOngkir: {makananSaja:4, makanan:3, minuman:2} // gratis ongkir: 4 makanan, ATAU 3 makanan + 2 minuman/cemilan
 };

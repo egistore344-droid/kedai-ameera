@@ -1,7 +1,7 @@
 // Service worker Kedai Jajanan AMEERA
 // Ganti angka versi ini setiap kali mengubah file supaya aplikasi di HP ikut terbarui.
-const VERSI = "ameera-v10";
-const FILE = ["./", "./index.html", "./kasir.html", "./menu.js?v=10", "./toko.js?v=10", "./kasir.json", "./manifest.json", "./icon-192.png", "./icon-512.png", "./icon-maskable.png"];
+const VERSI = "ameera-v13";
+const FILE = ["./", "./index.html", "./kasir.html", "./menu.js?v=13", "./toko.js?v=13", "./kasir.json", "./manifest.json", "./icon-192.png", "./icon-512.png", "./icon-maskable.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSI).then(c => c.addAll(FILE)));
