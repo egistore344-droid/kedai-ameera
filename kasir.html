@@ -153,6 +153,16 @@
   .tag{border-radius:99px;padding:1px 8px;font-size:.72rem;font-weight:800}
   .tag.batal{background:#FFE9E4;color:var(--cabai)}
   .tag.tunggu{background:#FFF1C9;color:#8A6200}
+  .tag.tukar{background:#E8EEF9;color:#2B4C8C}
+  .menu.voucher{border-style:dashed;border-color:var(--daun);align-items:center;justify-content:center;color:var(--daun);font-weight:800;background:#F1F8F1}
+  .v-input{display:flex;gap:8px}
+  .v-input input{flex:1;text-transform:uppercase;letter-spacing:2px;font-weight:800}
+  .v-list{margin-top:10px}
+  .v-item{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 10px;border-radius:10px;margin-bottom:5px;font-weight:700;font-size:.9rem}
+  .v-item.ok{background:#EAF5EA;color:var(--daun)}
+  .v-item.no{background:#FFE9E4;color:var(--cabai)}
+  .v-item button{background:none;border:0;font-weight:800;color:inherit;font-size:1.1rem}
+  .v-hitung{font-family:'Fredoka',sans-serif;font-size:1.3rem;font-weight:700;margin-top:8px}
 
   /* STATISTIK */
   .kotak-stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
@@ -174,6 +184,19 @@
   .toast{position:fixed;left:50%;top:12px;z-index:60;transform:translate(-50%,-160%);background:var(--coklat);color:#FFF3C4;font-weight:800;padding:10px 18px;border-radius:99px;transition:transform .3s;max-width:92vw;text-align:center}
   .toast.show{transform:translate(-50%,0)}
   .pengaturan{max-width:520px;margin:0 auto}
+  .menu.habis{opacity:.5;border-style:dashed}
+  .menu.habis::after{content:"HABIS";position:absolute;top:6px;right:8px;font-size:.65rem;font-weight:800;color:var(--cabai)}
+  .toko{max-width:760px;margin:0 auto;display:grid;gap:12px}
+  .toko h2{font-size:1.2rem;margin-bottom:4px}
+  .dua{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .baris-stok{display:grid;grid-template-columns:1fr 96px 92px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--garis)}
+  .baris-stok b{font-size:.92rem;line-height:1.2}
+  .baris-stok input{padding:7px 8px;border-radius:10px;text-align:right}
+  .baris-stok input.ubah{border-color:var(--kuah);background:#FFF1E6}
+  .stok{border:2px solid var(--daun);background:#EAF5EA;color:var(--daun);border-radius:10px;padding:7px 4px;font-weight:800;font-size:.82rem}
+  .stok.habis{border-color:var(--cabai);background:#FFE9E4;color:var(--cabai)}
+  .kat-judul{font-family:'Fredoka',sans-serif;font-weight:700;margin:14px 0 2px;color:var(--abu)}
+  .simpan-toko{position:sticky;bottom:0;background:linear-gradient(transparent,var(--kertas) 25%);padding:14px 0 calc(8px + env(safe-area-inset-bottom))}
   .pengaturan h2{font-size:1.4rem;margin-bottom:4px}
 </style>
 </head>
@@ -188,6 +211,7 @@
     <button data-hal="kasir" class="on">Kasir</button>
     <button data-hal="riwayat">Riwayat</button>
     <button data-hal="stat">Statistik</button>
+    <button data-hal="toko">Toko</button>
     <button data-hal="atur" aria-label="Pengaturan">⚙️</button>
   </nav>
 </header>
@@ -276,6 +300,47 @@
     <div class="grid-stat" id="gridStat"></div>
   </section>
 
+  <!-- ============ TOKO ============ -->
+  <section id="hal-toko" hidden>
+    <div class="toko">
+      <div class="kartu">
+        <h2>🏪 Status toko</h2>
+        <div class="pil" id="tStatus">
+          <button data-v="otomatis">Otomatis (ikut jam)</button>
+          <button data-v="buka">Buka sekarang</button>
+          <button data-v="tutup">Tutup sementara</button>
+        </div>
+        <div id="tBlokPesan" hidden>
+          <span class="label">Pesan untuk pembeli <em>(opsional)</em></span>
+          <input type="text" id="tPesan" placeholder="Contoh: Libur hari ini, buka lagi besok pukul 10.00">
+        </div>
+        <div class="dua">
+          <div><span class="label">Jam buka</span><input type="number" id="tBuka" min="0" max="23" inputmode="numeric"></div>
+          <div><span class="label">Jam tutup</span><input type="number" id="tTutup" min="1" max="24" inputmode="numeric"></div>
+        </div>
+        <p class="kecil" id="tStatusKet" style="margin-top:8px"></p>
+      </div>
+
+      <div class="kartu">
+        <h2>📢 Pengumuman di website</h2>
+        <textarea id="tPengumuman" placeholder="Contoh: Hari ini ada menu baru! Kosongkan untuk menyembunyikan."></textarea>
+      </div>
+
+      <div class="kartu">
+        <h2>📦 Stok &amp; harga</h2>
+        <p class="kecil">Tekan tombol hijau untuk menandai menu <b>Habis</b>. Ubah angka untuk mengganti harga.</p>
+        <div id="tMenu"></div>
+        <button class="btn putih" id="tSemuaAda" style="margin-top:12px">Tandai semua tersedia</button>
+      </div>
+
+      <div class="simpan-toko">
+        <div class="err" id="tErr"></div>
+        <button class="btn hijau lebar" id="tSimpan">Simpan pengaturan toko</button>
+        <p class="kecil" id="tInfo" style="text-align:center;margin-top:6px"></p>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ PENGATURAN ============ -->
   <section id="hal-atur" hidden>
     <div class="pengaturan kartu">
@@ -323,6 +388,21 @@
   </div>
 </div>
 
+<!-- Modal tukar voucher -->
+<div class="modal" id="mVoucher">
+  <div class="isi">
+    <h3>🎟️ Tukar voucher</h3>
+    <p class="kecil" id="vKet"></p>
+    <span class="label">Kode struk (No. # di struk)</span>
+    <div class="v-input"><input type="text" id="vKode" maxlength="6" placeholder="Contoh: F5UZJF" autocomplete="off" autocapitalize="characters"><button class="btn" id="vCek">Cek</button></div>
+    <div class="v-hitung" id="vHitung"></div>
+    <div class="v-list" id="vList"></div>
+    <span class="label">Pilih hadiah</span>
+    <div class="pil" id="vHadiah"></div>
+    <div class="aksi"><button class="btn putih" data-tutup>Batal</button><button class="btn hijau" id="vOk" disabled>Tukar</button></div>
+  </div>
+</div>
+
 <!-- Modal struk / detail -->
 <div class="modal" id="mStruk">
   <div class="isi">
@@ -342,6 +422,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="menu.js"></script>
+<script src="toko.js"></script>
 <script>
 /* ===================== DASAR ===================== */
 const $ = id => document.getElementById(id);
@@ -411,6 +492,7 @@ async function sinkron(diam){
       if (!j.ok) throw new Error(j.error);
       antrianStatus = antrianStatus.filter(s => !j.diubah.includes(s.id));
     }
+    if (await ambilToko(cfg.url)) { renderMenu(); if (halaman==="toko" && !tokoDiubah) renderToko(); }
     const dari = Date.now() - 62*864e5;
     const j = await panggil("GET", dari);
     if (!j.ok) throw new Error(j.error);
@@ -434,7 +516,7 @@ let halaman = "kasir";
 function keHalaman(h){
   halaman = h;
   document.querySelectorAll("#tab button").forEach(b => b.classList.toggle("on", b.dataset.hal===h));
-  ["kasir","riwayat","stat","atur"].forEach(x => $("hal-"+x).hidden = x!==h);
+  ["kasir","riwayat","stat","toko","atur"].forEach(x => $("hal-"+x).hidden = x!==h);
   $("main").classList.toggle("di-kasir", h==="kasir");
   renderHalaman();
 }
@@ -443,6 +525,7 @@ function renderHalaman(){
   if (halaman==="kasir") renderKeranjang();
   if (halaman==="riwayat") renderRiwayat();
   if (halaman==="stat") renderStat();
+  if (halaman==="toko" && !tokoDiubah) renderToko();
 }
 
 /* ===================== KASIR: MENU ===================== */
@@ -456,13 +539,15 @@ function renderMenu(){
   const items = Object.values(semuaItem).filter(i => (katAktif==="semua" || i.kat===katAktif) && (!q || i.nama.toLowerCase().includes(q)));
   $("grid").innerHTML = items.map(i => {
     const n = keranjang.filter(b=>b.id===i.id).reduce((s,b)=>s+b.qty,0);
-    return `<button class="menu" data-id="${i.id}"><b>${i.nama}</b><span>${rp(i.harga)}</span>${n?`<em class="jml">${n}</em>`:""}</button>`;
-  }).join("") + `<button class="menu plus" id="itemLain">+ Item lain</button>`;
+    return `<button class="menu${i.habis?" habis":""}" data-id="${i.id}"><b>${i.nama}</b><span>${rp(i.harga)}</span>${n?`<em class="jml">${n}</em>`:""}</button>`;
+  }).join("") + `<button class="menu plus" id="itemLain">+ Item lain</button><button class="menu voucher" id="tukarVoucher">🎟️ Tukar voucher</button>`;
 }
 $("grid").onclick = e => {
   const b = e.target.closest("button"); if (!b) return;
+  if (b.id==="tukarVoucher") { bukaVoucher(); return; }
   if (b.id==="itemLain") { $("lNama").value=""; $("lHarga").value=""; bukaModal("mLain"); setTimeout(()=>$("lNama").focus(),100); return; }
   const i = semuaItem[b.dataset.id];
+  if (i.habis && !confirm(`${i.nama} sedang ditandai HABIS. Tetap tambahkan?`)) return;
   if (i.pilih) bukaPilih(i.id); else tambahItem({id:i.id, nama:i.nama, harga:i.harga, qty:1, rasa:null, level:null, topping:[]});
 };
 $("lOk").onclick = () => {
@@ -476,13 +561,14 @@ $("lOk").onclick = () => {
 let pilih = {};
 function bukaPilih(id){
   const i = semuaItem[id];
-  pilih = {id, rasa: i.rasa ? RASA[0] : null, level:3, topping:[], qty:1};
+  pilih = {id, rasa: i.rasa ? RASA[0] : null, level:3, topping:[], qty:1, voucher:null};
   $("pJudul").textContent = i.nama;
   $("pBlokRasa").hidden = !i.rasa;
   $("pRasa").innerHTML = RASA.map(r => `<button data-v="${r}">${r}</button>`).join("");
   $("pLevel").innerHTML = LEVEL.map((_,n) => `<button data-v="${n}" aria-label="Level ${n}">${n}</button>`).join("");
   $("pBlokTp").hidden = !i.topping;
   $("pTp").innerHTML = (i.topping||[]).map(n => `<div class="tp" data-n="${n}"><div><b>${n}</b> <span class="kecil">+${rp(hargaTp(n))}</span></div><div class="step"><button data-tp="-1">−</button><span>0</span><button data-tp="1">+</button></div></div>`).join("");
+  $("pMin").disabled = $("pPlus").disabled = false;
   renderPilih(); bukaModal("mPilih");
 }
 function renderPilih(){
@@ -490,7 +576,7 @@ function renderPilih(){
   pilihTombol("pLevel", String(pilih.level));
   document.querySelectorAll("#pTp .tp").forEach(el => { const q = pilih.topping.find(t=>t.nama===el.dataset.n)?.qty||0; el.querySelector("span:not(.kecil)").textContent=q; el.classList.toggle("on",q>0); });
   $("pQty").textContent = pilih.qty;
-  const satu = hargaSatuan({id:pilih.id, topping:pilih.topping});
+  const satu = hargaSatuan({id:pilih.id, topping:pilih.topping, ...(pilih.voucher?{harga:0}:{})});
   $("pHarga").textContent = rp(satu) + " per porsi";
   $("pOk").textContent = "Tambah · " + rp(satu*pilih.qty);
 }
@@ -506,14 +592,18 @@ $("pMin").onclick = () => { if (pilih.qty>1){ pilih.qty--; renderPilih(); } };
 $("pPlus").onclick = () => { pilih.qty++; renderPilih(); };
 $("pOk").onclick = () => {
   const i = semuaItem[pilih.id];
-  tambahItem({id:i.id, nama:i.nama, harga:i.harga, qty:pilih.qty, rasa:pilih.rasa, level:pilih.level, topping:pilih.topping.map(t=>({...t}))});
+  if (pilih.voucher) {
+    tambahItem({id:i.id, nama:i.nama+" (Voucher)", harga:0, qty:1, rasa:pilih.rasa, level:pilih.level, topping:pilih.topping.map(t=>({...t})), voucher:true, tukar:pilih.voucher});
+  } else {
+    tambahItem({id:i.id, nama:i.nama, harga:i.harga, qty:pilih.qty, rasa:pilih.rasa, level:pilih.level, topping:pilih.topping.map(t=>({...t}))});
+  }
   tutupModal();
 };
 
 /* ===================== KASIR: KERANJANG ===================== */
 let keranjang = [];
 let form = {sumber:"Datang langsung", metode:"Makan di sini", bayar:"Tunai"};
-const kunci = b => [b.id,b.rasa,b.level,teksTp(b.topping)].join("|");
+const kunci = b => [b.id,b.rasa,b.level,teksTp(b.topping),b.voucher?"V"+Math.random():""].join("|");
 function tambahItem(b){
   const ada = keranjang.find(x => kunci(x)===kunci(b));
   if (ada) ada.qty += b.qty; else keranjang.push(b);
@@ -583,12 +673,19 @@ $("btnSimpan").onclick = () => {
     id: "P" + ts.toString(36).toUpperCase() + Math.random().toString(36).slice(2,4).toUpperCase(),
     ts, waktu: tglPanjang(ts) + " " + jamWIB(ts),
     nama: $("fNama").value.trim(), sumber: form.sumber, metode: form.metode, bayar: form.bayar,
-    items: keranjang.map(b => ({id:b.id, nama:b.nama, harga:b.harga, qty:b.qty, rasa:b.rasa, level:b.level, topping:b.topping, lain:!!b.lain, minuman:!!semuaItem[b.id]?.minuman})),
+    items: keranjang.map(b => ({id:b.id, nama:b.nama, harga:b.harga, qty:b.qty, rasa:b.rasa, level:b.level, topping:b.topping, lain:!!b.lain, minuman:!!semuaItem[b.id]?.minuman, ...(b.voucher?{voucher:true, tukar:b.tukar}:{})})),
     subtotal: h.sub, ongkir: h.ongkir, total: h.total,
     diterima: form.bayar==="Tunai" ? (terima || h.total) : "",
     status: "selesai", catatan: $("fCatatan").value.trim(), perangkat: cfg.perangkat || "Kasir"
   };
-  antrian.push(o); data.push({...o, _tunggu:true}); simpanLokal();
+  antrian.push(o); data.push({...o, _tunggu:true});
+  // Tandai struk yang dipakai untuk voucher sebagai "ditukar"
+  o.items.filter(b=>b.voucher).forEach(b => (b.tukar||[]).forEach(id => {
+    const q = antrian.find(x=>x.id===id);
+    if (q) q.status = "ditukar"; else antrianStatus.push({id, status:"ditukar"});
+    data.forEach(x => { if (x.id===id) x.status = "ditukar"; });
+  }));
+  simpanLokal();
   resetForm(); $("panelWrap").classList.remove("show");
   bukaStruk(o, true);
   sinkron(true);
@@ -626,7 +723,18 @@ function susunStruk(o){
   if (o.bayar==="Tunai" && o.diterima){ L.push({t:kiriKanan("Tunai", angka(o.diterima))}); L.push({t:kiriKanan("Kembali", angka(o.diterima-o.total))}); }
   else L.push({t:kiriKanan("Bayar", ascii(o.bayar))});
   if (o.catatan) { L.push({t:garis}); bungkus("Catatan: "+o.catatan).forEach(t=>L.push({t})); }
+  const tukar = (o.items||[]).filter(b=>b.voucher);
+  if (tukar.length) { L.push({t:garis}); tukar.forEach(b => bungkus(`Voucher ditukar (${(b.tukar||[]).length} struk): ${(b.tukar||[]).map(x=>x.slice(-6)).join(" ")}`).forEach(t=>L.push({t}))); }
   if (o.status==="batal") { L.push({t:garis}); L.push({t:"*** DIBATALKAN ***", c:1, b:1}); }
+  const V = KEDAI.voucher;
+  if (V && o.status!=="batal" && (+o.total||0) >= V.minBelanja) {
+    L.push({t:garis});
+    L.push({t:"** KUPON VOUCHER **", c:1, b:1});
+    L.push({t:"KODE: "+o.id.slice(-6), c:1, b:1, big:1});
+    bungkus(`Kumpulkan ${V.jumlah} struk, tukar 1 ${V.hadiah.map(h=>semuaItem[h]?.nama).join(" / ")} GRATIS.`).forEach(t=>L.push({t, c:1}));
+    L.push({t:`Min. belanja Rp${angka(V.minBelanja)}/struk`, c:1});
+    L.push({t:`Berlaku s/d ${tglPanjang(o.ts + V.berlakuHari*864e5)}`, c:1});
+  }
   L.push({t:garis});
   L.push({t:"Terima kasih, selamat menikmati!", c:1});
   L.push({t:"Pesan online:", c:1});
@@ -673,6 +781,117 @@ $("sBatal").onclick = () => {
   simpanLokal(); tutupModal(); renderHalaman(); kabari("Pesanan dibatalkan"); sinkron(true);
 };
 
+/* ===================== TOKO (ADMIN) ===================== */
+let draf = null, tokoDiubah = false;
+function renderToko(){
+  draf = JSON.parse(JSON.stringify({...TOKO_DEFAULT, ...TOKO}));
+  tokoDiubah = false;
+  $("tPesan").value = draf.pesanTutup || "";
+  $("tBuka").value = draf.jamBuka; $("tTutup").value = draf.jamTutup;
+  $("tPengumuman").value = draf.pengumuman || "";
+  const baris = (key, nama, harga, asli, hKey) => `
+    <div class="baris-stok">
+      <b>${nama}</b>
+      <input type="number" inputmode="numeric" min="0" step="500" data-h="${hKey}" data-k="${key}" value="${harga}" class="${harga!==asli?"ubah":""}" aria-label="Harga ${nama}">
+      <button class="stok${draf.habis.includes(key)?" habis":""}" data-s="${key}">${draf.habis.includes(key)?"Habis":"Tersedia"}</button>
+    </div>`;
+  $("tMenu").innerHTML = MENU.map(k => `<div class="kat-judul">${k.judul}</div>` + k.items.map(i => baris(i.id, i.nama, i.harga, HARGA_ASLI[i.id], "harga")).join("")).join("")
+    + `<div class="kat-judul">Topping</div>` + TOPPING.map(t => baris("tp:"+t.nama, t.nama, t.harga, HARGA_TP_ASLI[t.nama], "hargaTp")).join("");
+  renderTokoStatus();
+  $("tInfo").textContent = TOKO.diubah ? `Terakhir diubah ${tglPanjang(TOKO.diubah)} ${jamWIB(TOKO.diubah)}${TOKO.oleh?" oleh "+TOKO.oleh:""}` : "";
+  $("tErr").textContent = "";
+}
+function renderTokoStatus(){
+  pilihTombol("tStatus", draf.status);
+  $("tBlokPesan").hidden = draf.status!=="tutup";
+  $("tStatusKet").textContent = {
+    otomatis: `Website buka otomatis pukul ${draf.jamBuka}.00–${draf.jamTutup}.00 WIB setiap hari.`,
+    buka: "Website tetap BUKA di luar jam biasa sampai kamu kembalikan ke Otomatis.",
+    tutup: "Website TUTUP dan pembeli tidak bisa pesan sampai kamu kembalikan ke Otomatis."
+  }[draf.status];
+}
+const tandaiUbah = () => { tokoDiubah = true; $("tSimpan").textContent = "Simpan pengaturan toko •"; };
+$("tStatus").onclick = e => { const b=e.target.closest("button"); if(!b) return; draf.status=b.dataset.v; tandaiUbah(); renderTokoStatus(); };
+$("tPesan").oninput = () => { draf.pesanTutup = $("tPesan").value; tandaiUbah(); };
+$("tBuka").oninput = () => { draf.jamBuka = +$("tBuka").value; tandaiUbah(); renderTokoStatus(); };
+$("tTutup").oninput = () => { draf.jamTutup = +$("tTutup").value; tandaiUbah(); renderTokoStatus(); };
+$("tPengumuman").oninput = () => { draf.pengumuman = $("tPengumuman").value; tandaiUbah(); };
+$("tMenu").addEventListener("click", e => {
+  const b = e.target.closest("button[data-s]"); if (!b) return;
+  const k = b.dataset.s, habis = !draf.habis.includes(k);
+  draf.habis = habis ? [...draf.habis, k] : draf.habis.filter(x=>x!==k);
+  b.classList.toggle("habis", habis); b.textContent = habis ? "Habis" : "Tersedia"; tandaiUbah();
+});
+$("tMenu").addEventListener("input", e => {
+  const inp = e.target.closest("input[data-h]"); if (!inp) return;
+  const k = inp.dataset.k.replace(/^tp:/,""), grup = inp.dataset.h;
+  const asli = grup==="harga" ? HARGA_ASLI[k] : HARGA_TP_ASLI[k];
+  if (inp.value==="" || +inp.value===asli) delete draf[grup][k]; else draf[grup][k] = +inp.value;
+  inp.classList.toggle("ubah", inp.value!=="" && +inp.value!==asli); tandaiUbah();
+});
+$("tSemuaAda").onclick = () => { draf.habis = []; document.querySelectorAll("#tMenu .stok").forEach(b => { b.classList.remove("habis"); b.textContent="Tersedia"; }); tandaiUbah(); };
+$("tSimpan").onclick = async () => {
+  $("tErr").textContent = "";
+  if (!cfg.url) { $("tErr").textContent = "Atur link Apps Script dulu di menu ⚙️."; return; }
+  if (!(draf.jamBuka >= 0 && draf.jamTutup <= 24 && draf.jamBuka < draf.jamTutup)) { $("tErr").textContent = "Jam buka harus lebih kecil dari jam tutup (0–24)."; return; }
+  $("tSimpan").disabled = true; $("tSimpan").textContent = "Menyimpan…";
+  try {
+    const j = await panggil("POST", {aksi:"toko", toko:draf, perangkat:cfg.perangkat});
+    if (!j.ok) throw new Error(j.error || "Gagal");
+    localStorage.setItem("toko-set", JSON.stringify(j.toko)); terapkanToko(j.toko);
+    kabari("✓ Pengaturan toko tersimpan"); renderToko(); renderMenu();
+  } catch(e) {
+    $("tErr").textContent = String(e.message).includes("PIN") ? "PIN salah." : "Gagal menyimpan. Pastikan internet menyala dan Apps Script sudah diperbarui.";
+  }
+  $("tSimpan").disabled = false; $("tSimpan").textContent = "Simpan pengaturan toko";
+};
+
+/* ===================== VOUCHER ===================== */
+let vKode = []; let vHadiah = null;
+function bukaVoucher(){
+  const V = KEDAI.voucher;
+  vKode = []; vHadiah = V.hadiah[0];
+  $("vKet").textContent = `Kumpulkan ${V.jumlah} struk (min. belanja ${rp(V.minBelanja)}, maks. ${V.berlakuHari} hari) untuk 1 menu gratis. Topping tambahan tetap dibayar.`;
+  $("vHadiah").innerHTML = V.hadiah.map(h => `<button data-v="${h}">${semuaItem[h].nama}</button>`).join("");
+  $("vKode").value = ""; renderVoucher(); bukaModal("mVoucher"); setTimeout(()=>$("vKode").focus(),100);
+}
+function cekKode(kode){
+  const V = KEDAI.voucher;
+  kode = kode.trim().toUpperCase().replace(/^#/,"");
+  if (kode.length < 4) return {kode, ok:false, alasan:"Kode terlalu pendek"};
+  if (vKode.some(v=>v.kode===kode)) return {kode, ok:false, alasan:"Sudah dimasukkan", dobel:true};
+  const o = data.find(x => x.id.toUpperCase().endsWith(kode));
+  if (!o) return {kode, ok:false, alasan:"Tidak ditemukan / sudah kedaluwarsa"};
+  if (o.status==="batal") return {kode, ok:false, alasan:"Pesanan dibatalkan"};
+  if (o.status==="ditukar" || keranjang.some(b => (b.tukar||[]).includes(o.id))) return {kode, ok:false, alasan:"Sudah pernah ditukar"};
+  if ((+o.total||0) < V.minBelanja) return {kode, ok:false, alasan:`Belanja di bawah ${rp(V.minBelanja)}`};
+  if (Date.now() - o.ts > V.berlakuHari*864e5) return {kode, ok:false, alasan:"Kedaluwarsa"};
+  return {kode, ok:true, id:o.id, alasan:`${tglPanjang(o.ts)} · ${rp(o.total)}`};
+}
+function renderVoucher(){
+  const V = KEDAI.voucher, sah = vKode.filter(v=>v.ok).length;
+  $("vHitung").textContent = `${sah} / ${V.jumlah} struk sah`;
+  $("vList").innerHTML = vKode.map((v,n) => `<div class="v-item ${v.ok?"ok":"no"}"><span>${v.ok?"✓":"✗"} #${v.kode} — ${v.alasan}</span><button data-n="${n}" aria-label="Hapus">×</button></div>`).join("");
+  pilihTombol("vHadiah", vHadiah);
+  $("vOk").disabled = sah < V.jumlah;
+  $("vOk").textContent = sah < V.jumlah ? `Kurang ${V.jumlah - sah} struk` : "Tukar & pilih rasa";
+}
+function tambahKode(){
+  const h = cekKode($("vKode").value); $("vKode").value = "";
+  if (h.dobel) { kabari("Kode itu sudah dimasukkan"); return; }
+  vKode.push(h); renderVoucher(); $("vKode").focus();
+}
+$("vCek").onclick = tambahKode;
+$("vKode").addEventListener("keydown", e => { if (e.key==="Enter") tambahKode(); });
+$("vList").onclick = e => { const b=e.target.closest("button[data-n]"); if(b){ vKode.splice(+b.dataset.n,1); renderVoucher(); } };
+$("vHadiah").onclick = e => { const b=e.target.closest("button"); if(b){ vHadiah=b.dataset.v; renderVoucher(); } };
+$("vOk").onclick = () => {
+  const ids = vKode.filter(v=>v.ok).slice(0, KEDAI.voucher.jumlah).map(v=>v.id);
+  tutupModal(); bukaPilih(vHadiah);
+  pilih.voucher = ids; $("pJudul").textContent = semuaItem[vHadiah].nama + " (Voucher)";
+  $("pMin").disabled = $("pPlus").disabled = true; renderPilih();
+};
+
 /* ===================== RIWAYAT ===================== */
 $("tglRiwayat").value = tglWIB(Date.now());
 $("tglRiwayat").onchange = renderRiwayat;
@@ -689,7 +908,7 @@ function renderRiwayat(){
     <button class="pesanan ${o.status==="batal"?"batal":""}" data-id="${o.id}">
       <span class="jam">${jamWIB(o.ts)}</span>
       <span class="nm"><b>${o.nama || o.metode}</b><small>${(o.items||[]).map(b=>b.qty+"x "+b.nama).join(", ")}</small></span>
-      <span class="rp">${rp(o.total)}${o.status==="batal"?`<small class="tag batal">Batal</small>`:o._tunggu?`<small class="tag tunggu">Belum terkirim</small>`:`<small class="kecil">${o.bayar==="Tunai"?"Tunai":"Transfer"}</small>`}</span>
+      <span class="rp">${rp(o.total)}${o.status==="batal"?`<small class="tag batal">Batal</small>`:o.status==="ditukar"?`<small class="tag tukar">Voucher ditukar</small>`:o._tunggu?`<small class="tag tunggu">Belum terkirim</small>`:`<small class="kecil">${o.bayar==="Tunai"?"Tunai":"Transfer"}</small>`}</span>
     </button>`).join("") : `<div class="kosong">Belum ada pesanan di tanggal ini.</div>`;
 }
 $("listRiwayat").onclick = e => { const b=e.target.closest(".pesanan"); if(!b) return; const o=data.find(x=>x.id===b.dataset.id); if(o) bukaStruk(o,false); };

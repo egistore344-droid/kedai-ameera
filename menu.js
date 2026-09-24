@@ -3,6 +3,8 @@
    dan aplikasi kasir (kasir.html). Ubah harga/menu cukup di sini.
    ============================================================ */
 const KEDAI = {
+  // Link Apps Script (Web app URL) — dipakai website untuk membaca pengaturan toko
+  api:    "https://script.google.com/macros/s/AKfycbyWFdxY-Okd7YjSLrnfv0rvIZXD4Cf9kwlbzmYnPsZHJJ5fAHzXGOk3uuXV3k4VOc2M/exec",
   nama:   "Kedai Jajanan AMEERA",
   wa:     "62881023089937",          // nomor WA kedai, awali 62 (bukan 0)
   alamatSingkat: "Graha Purwadadi Village A/9",
@@ -13,6 +15,11 @@ const KEDAI = {
   // Isi nomor rekening / e-wallet di sini. Kalau kosong, nomor dikirim lewat WhatsApp.
   // Contoh: rekening: ["DANA 0881xxxxxxx a.n. Nama", "BRI 1234xxxx a.n. Nama"],
   rekening: [],
+  // Promo "Share & dapat gratis": 1 minuman/cemilan gratis dengan harga maksimal ini
+  bonusShare: { maks: 5000 },
+  // Voucher di struk: kumpulkan sejumlah struk, tukar 1 menu gratis
+  voucher: { jumlah: 10, minBelanja: 10000, berlakuHari: 60, hadiah: ["sb-ori", "ms-ori"] },
+  instagram: "",                     // username IG kedai tanpa @ (kosongkan kalau belum ada)
   codAntar: false,                   // false = pesanan antar wajib transfer dulu (anti iseng)
   gratisOngkir: {makananSaja:4, makanan:3, minuman:2} // gratis ongkir: 4 makanan, ATAU 3 makanan + 2 minuman/cemilan
 };
