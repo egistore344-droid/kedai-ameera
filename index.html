@@ -199,6 +199,10 @@
   .tp-step span{min-width:24px;text-align:center;font-weight:800}
   .chips{display:flex;flex-wrap:wrap;gap:8px}
   #rasa{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  #varian{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  #varian button{padding:9px 6px;border-radius:14px;font-size:.9rem}
+  #varian button[aria-pressed="true"]{border-color:var(--kuah);background:#FFF1E6;color:var(--kuah)}
+  #blokVarian[hidden],#blokLevel[hidden]{display:none}
   #rasa button{padding:9px 4px;border-radius:14px;font-size:.92rem}
   .chips button{border:2px solid var(--garis);background:#fff;border-radius:999px;padding:6px 14px;font-weight:700}
   .chips button[aria-pressed="true"]{border-color:var(--kuah);background:#FFF1E6;color:var(--kuah)}
@@ -303,14 +307,21 @@
     <h3 id="pilihJudul"></h3>
     <div class="harga" id="pilihHarga"></div>
 
+    <div id="blokVarian">
+      <span class="label">Pilih mie</span>
+      <div class="chips" id="varian"></div>
+    </div>
+
     <div id="blokRasa">
       <span class="label">Rasa</span>
       <div class="chips" id="rasa"></div>
     </div>
 
-    <span class="label">Level pedas</span>
-    <div class="level" id="level"></div>
-    <div class="level-ket" id="levelKet"></div>
+    <div id="blokLevel">
+      <span class="label">Level pedas</span>
+      <div class="level" id="level"></div>
+      <div class="level-ket" id="levelKet"></div>
+    </div>
 
     <div id="blokTopping">
       <span class="label">Topping <em id="toppingKet"></em></span>
@@ -410,7 +421,7 @@
   </div>
 </div>
 
-<script src="menu.js?v=13"></script>
+<script src="menu.js?v=15"></script>
 <script>
 /* Nilai cadangan: website tetap jalan walau menu.js versi lama masih tersimpan di cache */
 KEDAI.bonusShare = KEDAI.bonusShare || { maks: 5000 };
@@ -423,7 +434,7 @@ KEDAI.rekening = KEDAI.rekening || [];
 KEDAI.jamBuka = KEDAI.jamBuka ?? 10; KEDAI.jamTutup = KEDAI.jamTutup ?? 18;
 KEDAI.api = KEDAI.api || "https://script.google.com/macros/s/AKfycbyWFdxY-Okd7YjSLrnfv0rvIZXD4Cf9kwlbzmYnPsZHJJ5fAHzXGOk3uuXV3k4VOc2M/exec";
 </script>
-<script src="toko.js?v=13"></script>
+<script src="toko.js?v=15"></script>
 <script>
 /* Data kedai & menu ada di file menu.js */
 
@@ -565,11 +576,14 @@ function bukaPilih(id){
   if (semuaItem[id].habis) return;
   if (!statusBuka) return;
   const i = semuaItem[id];
-  pilih = {id, rasa: i.rasa ? RASA[0] : null, level:3, topping:[], qty:1};
+  pilih = {id, varian: i.varian ? i.varian[0] : null, rasa: i.rasa ? RASA[0] : null, level: i.level===false ? null : 3, topping:[], qty:1};
   $("pilihJudul").textContent = i.nama;
   $("level").innerHTML = LEVEL.map((ket,n) => `<button data-lv="${n}" aria-pressed="false" aria-label="Level ${n}, ${ket}"><b>${n}</b><span class="cb${n?"":" nol"}">${n?"🌶️".repeat(n):"tanpa"}</span></button>`).join("");
   $("blokTopping").hidden = !i.topping;
   $("blokRasa").hidden = !i.rasa;
+  $("blokLevel").hidden = i.level===false;
+  $("blokVarian").hidden = !i.varian;
+  $("varian").innerHTML = (i.varian||[]).map(x => `<button data-varian="${x}" aria-pressed="false">${x.replace("Indomie ","")}</button>`).join("");
   $("rasa").innerHTML = RASA.map(x => `<button data-rasa="${x}" aria-pressed="false">${x}</button>`).join("");
   $("toppingKet").textContent = "(boleh dobel, misal ceker 2)";
   $("topping").innerHTML = TOPPING.filter(t => (i.topping||[]).includes(t.nama)).map(t => `<div class="tp-row${t.habis?" habis":""}"><div class="tp-nm"><b>${t.nama}</b><small>+${rp(t.harga)}</small></div><div class="tp-step"><button data-tpmin="${t.nama}" aria-label="Kurangi ${t.nama}"${t.habis?" disabled":""}>−</button><span data-tpq="${t.nama}">0</span><button data-tpplus="${t.nama}" aria-label="Tambah ${t.nama}"${t.habis?" disabled":""}>+</button></div></div>`).join("");
@@ -578,17 +592,19 @@ function bukaPilih(id){
 }
 function renderPilih(){
   document.querySelectorAll("#rasa button").forEach(b => b.setAttribute("aria-pressed", b.dataset.rasa===pilih.rasa));
+  document.querySelectorAll("#varian button").forEach(b => b.setAttribute("aria-pressed", b.dataset.varian===pilih.varian));
   document.querySelectorAll("#level button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.lv===pilih.level));
   document.querySelectorAll("#topping [data-tpq]").forEach(el => {
     const q = pilih.topping.find(t=>t.nama===el.dataset.tpq)?.qty || 0;
     el.textContent = q; el.closest(".tp-row").classList.toggle("on", q>0);
   });
-  $("levelKet").textContent = `Level ${pilih.level}: ${LEVEL[pilih.level]}`;
+  $("levelKet").textContent = pilih.level===null ? "" : `Level ${pilih.level}: ${LEVEL[pilih.level]}`;
   $("pQty").textContent = pilih.qty;
   const satu = hargaSatuan({id:pilih.id, topping:pilih.topping});
   $("pilihHarga").textContent = rp(satu);
   $("pTambah").textContent = `Masukkan keranjang · ${rp(satu*pilih.qty)}`;
 }
+$("varian").addEventListener("click", e => { const b=e.target.closest("button"); if(b){pilih.varian=b.dataset.varian; renderPilih();} });
 $("rasa").addEventListener("click", e => { const b=e.target.closest("button"); if(b){pilih.rasa=b.dataset.rasa; renderPilih();} });
 $("level").addEventListener("click", e => { const b=e.target.closest("button"); if(b){pilih.level=+b.dataset.lv; renderPilih();} });
 $("topping").addEventListener("click", e => {
@@ -604,10 +620,10 @@ $("topping").addEventListener("click", e => {
 $("pMin").onclick = () => { if(pilih.qty>1){pilih.qty--; renderPilih();} };
 $("pPlus").onclick = () => { pilih.qty++; renderPilih(); };
 $("pTambah").onclick = () => {
-  const key = pilih.id+"|"+pilih.rasa+"|"+pilih.level+"|"+pilih.topping.map(t=>t.nama+":"+t.qty).join(",");
+  const key = pilih.id+"|"+pilih.varian+"|"+pilih.rasa+"|"+pilih.level+"|"+pilih.topping.map(t=>t.nama+":"+t.qty).join(",");
   const ada = keranjang.find(b=>b.key===key);
   if (ada) ada.qty += pilih.qty;
-  else keranjang.push({key, id:pilih.id, qty:pilih.qty, rasa:pilih.rasa, level:pilih.level, topping:pilih.topping.map(t=>({...t}))});
+  else keranjang.push({key, id:pilih.id, qty:pilih.qty, varian:pilih.varian, rasa:pilih.rasa, level:pilih.level, topping:pilih.topping.map(t=>({...t}))});
   tutupSemua(); segarkan();
   kabari(`✓ ${semuaItem[pilih.id].nama} masuk keranjang`);
 };
@@ -619,7 +635,7 @@ function renderKeranjang(){
   if (kosong) return;
   $("daftar").innerHTML = keranjang.map(b => {
     const i = semuaItem[b.id];
-    const det = b.level!==null ? `${b.rasa?b.rasa+" · ":""}Level ${b.level}${b.topping.length?" · "+teksTopping(b.topping):""}` : "";
+    const det = [b.varian, b.rasa, b.level!=null ? "Level "+b.level : "", teksTopping(b.topping||[])].filter(Boolean).join(" · ");
     return `<div class="baris">
       <div class="nm"><b>${i.nama}</b>${det?`<small>${det}</small>`:""}<small>${rp(hargaSatuan(b))}</small></div>
       <div class="stepper"><button data-kmin="${b.key}" aria-label="Kurangi">−</button><span>${b.qty}</span><button data-kplus="${b.key}" aria-label="Tambah">+</button></div>
@@ -699,7 +715,8 @@ $("btnKirim").onclick = () => {
   keranjang.forEach((b,n) => {
     const i = semuaItem[b.id];
     t += `${n+1}. ${i.nama} x${b.qty} = ${rp(hargaSatuan(b)*b.qty)}\n`;
-    if (b.level!==null) t += `   ${b.rasa?`Rasa ${b.rasa} | `:""}Level ${b.level} (${LEVEL[b.level]})${i.topping ? (b.topping.length?` | Topping: ${teksTopping(b.topping)}`:" | Tanpa topping") : ""}\n`;
+    const bag = [b.varian, b.rasa ? `Rasa ${b.rasa}` : "", b.level!=null ? `Level ${b.level} (${LEVEL[b.level]})` : "", i.topping ? (b.topping.length ? `Topping: ${teksTopping(b.topping)}` : "Tanpa topping") : ""].filter(Boolean);
+    if (bag.length) t += `   ${bag.join(" | ")}\n`;
   });
   t += `\n*Total: ${rp(totalSemua())}*\n\n`;
   t += `Nama: ${nama}\nCara ambil: ${metode}\nCara bayar: ${bayar}\n`;

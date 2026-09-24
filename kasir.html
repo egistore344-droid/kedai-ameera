@@ -438,6 +438,7 @@
   <div class="isi">
     <h3 id="pJudul"></h3>
     <div class="kecil" id="pHarga"></div>
+    <div id="pBlokVarian"><span class="label">Pilih mie</span><div class="pil" id="pVarian"></div></div>
     <div id="pBlokRasa"><span class="label">Rasa</span><div class="pil" id="pRasa"></div></div>
     <div id="pBlokLevel"><span class="label">Level pedas</span><div class="level" id="pLevel"></div></div>
     <div id="pBlokTp"><span class="label">Topping</span><div id="pTp"></div></div>
@@ -547,7 +548,7 @@
 <div id="areaCetak"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="menu.js?v=13"></script>
+<script src="menu.js?v=15"></script>
 <script>
 /* Nilai cadangan: website tetap jalan walau menu.js versi lama masih tersimpan di cache */
 KEDAI.bonusShare = KEDAI.bonusShare || { maks: 5000 };
@@ -560,7 +561,7 @@ KEDAI.rekening = KEDAI.rekening || [];
 KEDAI.jamBuka = KEDAI.jamBuka ?? 10; KEDAI.jamTutup = KEDAI.jamTutup ?? 18;
 KEDAI.api = KEDAI.api || "https://script.google.com/macros/s/AKfycbyWFdxY-Okd7YjSLrnfv0rvIZXD4Cf9kwlbzmYnPsZHJJ5fAHzXGOk3uuXV3k4VOc2M/exec";
 </script>
-<script src="toko.js?v=13"></script>
+<script src="toko.js?v=15"></script>
 <script>
 /* ===================== DASAR ===================== */
 const $ = id => document.getElementById(id);
@@ -587,7 +588,7 @@ bangunItem();
 const hargaTp = n => (TOPPING.find(t=>t.nama===n)?.harga || 0);
 const hargaSatuan = b => (b.harga ?? semuaItem[b.id]?.harga ?? 0) + (b.topping||[]).reduce((s,t)=>s+hargaTp(t.nama)*t.qty,0);
 const teksTp = arr => (arr||[]).map(t => t.qty>1 ? `${t.nama} x${t.qty}` : t.nama).join(", ");
-const detail = b => [b.rasa, b.level!=null ? "Level "+b.level : "", teksTp(b.topping)].filter(Boolean).join(" · ");
+const detail = b => [b.varian, b.rasa, b.level!=null && b.level!=="" ? "Level "+b.level : "", teksTp(b.topping)].filter(Boolean).join(" · ");
 
 /* ===================== DATA & SINKRON ===================== */
 let cfg = ambil("kasir-cfg", {url:"", pin:"", perangkat:""});
@@ -704,9 +705,12 @@ $("lOk").onclick = () => {
 let pilih = {};
 function bukaPilih(id){
   const i = semuaItem[id];
-  pilih = {id, rasa: i.rasa ? RASA[0] : null, level:3, topping:[], qty:1, voucher:null};
+  pilih = {id, varian: i.varian ? i.varian[0] : null, rasa: i.rasa ? RASA[0] : null, level: i.level===false ? null : 3, topping:[], qty:1, voucher:null};
   $("pJudul").textContent = i.nama;
   $("pBlokRasa").hidden = !i.rasa;
+  $("pBlokLevel").hidden = i.level===false;
+  $("pBlokVarian").hidden = !i.varian;
+  $("pVarian").innerHTML = (i.varian||[]).map(v => `<button data-v="${v}">${v.replace("Indomie ","")}</button>`).join("");
   $("pRasa").innerHTML = RASA.map(r => `<button data-v="${r}">${r}</button>`).join("");
   $("pLevel").innerHTML = LEVEL.map((_,n) => `<button data-v="${n}" aria-label="Level ${n}">${n}</button>`).join("");
   $("pBlokTp").hidden = !i.topping;
@@ -716,6 +720,7 @@ function bukaPilih(id){
 }
 function renderPilih(){
   pilihTombol("pRasa", pilih.rasa);
+  pilihTombol("pVarian", pilih.varian);
   pilihTombol("pLevel", String(pilih.level));
   document.querySelectorAll("#pTp .tp").forEach(el => { const q = pilih.topping.find(t=>t.nama===el.dataset.n)?.qty||0; el.querySelector("span:not(.kecil)").textContent=q; el.classList.toggle("on",q>0); });
   $("pQty").textContent = pilih.qty;
@@ -723,6 +728,7 @@ function renderPilih(){
   $("pHarga").textContent = rp(satu) + " per porsi";
   $("pOk").textContent = "Tambah · " + rp(satu*pilih.qty);
 }
+$("pVarian").onclick = e => { const b=e.target.closest("button"); if(b){ pilih.varian=b.dataset.v; renderPilih(); } };
 $("pRasa").onclick = e => { const b=e.target.closest("button"); if(b){ pilih.rasa=b.dataset.v; renderPilih(); } };
 $("pLevel").onclick = e => { const b=e.target.closest("button"); if(b){ pilih.level=+b.dataset.v; renderPilih(); } };
 $("pTp").onclick = e => {
@@ -736,9 +742,9 @@ $("pPlus").onclick = () => { pilih.qty++; renderPilih(); };
 $("pOk").onclick = () => {
   const i = semuaItem[pilih.id];
   if (pilih.voucher) {
-    tambahItem({id:i.id, nama:i.nama+" (Voucher)", harga:0, qty:1, rasa:pilih.rasa, level:pilih.level, topping:pilih.topping.map(t=>({...t})), voucher:true, tukar:pilih.voucher});
+    tambahItem({id:i.id, nama:i.nama+" (Voucher)", harga:0, qty:1, varian:pilih.varian, rasa:pilih.rasa, level:pilih.level, topping:pilih.topping.map(t=>({...t})), voucher:true, tukar:pilih.voucher});
   } else {
-    tambahItem({id:i.id, nama:i.nama, harga:i.harga, qty:pilih.qty, rasa:pilih.rasa, level:pilih.level, topping:pilih.topping.map(t=>({...t}))});
+    tambahItem({id:i.id, nama:i.nama, harga:i.harga, qty:pilih.qty, varian:pilih.varian, rasa:pilih.rasa, level:pilih.level, topping:pilih.topping.map(t=>({...t}))});
   }
   tutupModal();
 };
@@ -746,7 +752,7 @@ $("pOk").onclick = () => {
 /* ===================== KASIR: KERANJANG ===================== */
 let keranjang = [];
 let form = {sumber:"Datang langsung", metode:"Makan di sini", bayar:"Tunai"};
-const kunci = b => [b.id,b.rasa,b.level,teksTp(b.topping),b.voucher?"V"+Math.random():"",b.kupon||""].join("|");
+const kunci = b => [b.id,b.varian,b.rasa,b.level,teksTp(b.topping),b.voucher?"V"+Math.random():"",b.kupon||""].join("|");
 function tambahItem(b){
   const ada = keranjang.find(x => kunci(x)===kunci(b));
   if (ada) ada.qty += b.qty; else keranjang.push(b);
@@ -816,7 +822,7 @@ $("btnSimpan").onclick = () => {
     id: "P" + ts.toString(36).toUpperCase() + Math.random().toString(36).slice(2,4).toUpperCase(),
     ts, waktu: tglPanjang(ts) + " " + jamWIB(ts),
     nama: $("fNama").value.trim(), sumber: form.sumber, metode: form.metode, bayar: form.bayar,
-    items: keranjang.map(b => ({id:b.id, nama:b.nama, harga:b.harga, qty:b.qty, rasa:b.rasa, level:b.level, topping:b.topping, lain:!!b.lain, minuman:!!semuaItem[b.id]?.minuman, ...(b.voucher?{voucher:true, tukar:b.tukar}:{}), ...(b.kupon?{kupon:b.kupon}:{})})),
+    items: keranjang.map(b => ({id:b.id, nama:b.nama, harga:b.harga, qty:b.qty, varian:b.varian||null, rasa:b.rasa, level:b.level, topping:b.topping, lain:!!b.lain, minuman:!!semuaItem[b.id]?.minuman, ...(b.voucher?{voucher:true, tukar:b.tukar}:{}), ...(b.kupon?{kupon:b.kupon}:{})})),
     subtotal: h.sub, ongkir: h.ongkir, total: h.total,
     diterima: form.bayar==="Tunai" ? (terima || h.total) : "",
     status: "selesai", catatan: $("fCatatan").value.trim(), perangkat: cfg.perangkat || "Kasir"
@@ -1258,11 +1264,12 @@ function renderStat(){
     <div><small>Rata-rata / pesanan</small><b>${rp(list.length?omzet/list.length:0)}</b></div>
     <div><small>Porsi terjual</small><b>${porsi}</b></div>`;
 
-  const menu = {}, rasa = {}, level = {}, sumber = {}, metode = {}, jam = {}, hari = {};
+  const menu = {}, rasa = {}, varian = {}, level = {}, sumber = {}, metode = {}, jam = {}, hari = {};
   list.forEach(o => {
     (o.items||[]).forEach(b => {
       menu[b.nama] = (menu[b.nama]||0) + b.qty;
       if (b.rasa) rasa[b.rasa] = (rasa[b.rasa]||0) + b.qty;
+      if (b.varian) varian[b.varian] = (varian[b.varian]||0) + b.qty;
       if (b.level!=null && b.level!=="") level["Level "+b.level] = (level["Level "+b.level]||0) + b.qty;
     });
     sumber[o.sumber] = (sumber[o.sumber]||0) + 1;
@@ -1282,7 +1289,7 @@ function renderStat(){
     <div class="kartu"><h3>🏆 Menu terlaris</h3>${batangList(urut(menu).slice(0,10), v=>v+"x")}</div>
     <div class="kartu"><h3>🕒 Jam paling ramai</h3>${list.length?`<div class="kolom">${kolomJam}</div>`:`<div class="kecil">Belum ada data.</div>`}</div>
     ${rentang!=="hari" ? `<div class="kartu"><h3>📈 Omzet per hari</h3>${hariUrut.length?`<div class="kolom">${kolomHari}</div>`:`<div class="kecil">Belum ada data.</div>`}</div>` : ""}
-    <div class="kartu"><h3>🌶️ Rasa favorit</h3>${batangList(urut(rasa), v=>v+"x")}<h3 style="margin-top:14px">Level favorit</h3>${batangList(urut(level), v=>v+"x")}</div>
+    <div class="kartu"><h3>🌶️ Rasa favorit</h3>${batangList(urut(rasa), v=>v+"x")}<h3 style="margin-top:14px">Level favorit</h3>${batangList(urut(level), v=>v+"x")}<h3 style="margin-top:14px">Varian Indomie favorit</h3>${batangList(urut(varian), v=>v+"x")}</div>
     <div class="kartu"><h3>📲 Pesanan dari</h3>${batangList(urut(sumber))}<h3 style="margin-top:14px">Jenis pesanan</h3>${batangList(urut(metode))}</div>`;
 }
 
