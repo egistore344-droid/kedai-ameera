@@ -226,6 +226,32 @@
   .r-lihat.besar{font-size:1.2rem}
   .r-lihat.besar h3{font-size:1.8rem}
   .r-kosong{text-align:center;color:var(--abu);padding:30px 10px;line-height:1.6}
+  .blj{max-width:760px;margin:0 auto}
+  .blj-tempat{font-family:'Fredoka',sans-serif;font-weight:700;color:var(--abu);margin:14px 0 6px}
+  .blj-baris{background:#fff;border:2px solid var(--garis);border-radius:14px;padding:10px 12px;margin-bottom:7px}
+  .blj-baris.habis{border-color:var(--cabai);background:#FFF4F2}
+  .blj-baris.kurang{border-color:var(--kerupuk);background:#FFFBEF}
+  .blj-atas{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .blj-atas b{font-size:.98rem}
+  .blj-atas small{color:var(--abu);font-weight:700;font-size:.78rem;white-space:nowrap}
+  .blj-input{display:flex;gap:6px;align-items:center;margin-top:7px}
+  .blj-input input{width:90px;padding:7px 8px;border-radius:10px;text-align:right;font-weight:800}
+  .blj-input span{font-weight:700;color:var(--abu);flex:1}
+  .blj-input button{border:2px solid var(--garis);background:var(--kertas);border-radius:10px;padding:5px 9px;font-weight:800;font-size:.8rem}
+  .blj-status{font-size:.78rem;font-weight:800;margin-top:5px}
+  .blj-status.habis{color:var(--cabai)} .blj-status.kurang{color:#A07000} .blj-status.cukup{color:var(--daun)}
+  .blj-beli{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:#fff;border:2px solid var(--garis);border-radius:14px;padding:11px 12px;margin-bottom:7px}
+  .blj-beli .cek{width:26px;height:26px;border-radius:8px;border:2px solid var(--coklat);flex:none;display:grid;place-items:center;font-weight:800;color:#fff;margin:0}
+  .blj-beli.ok{opacity:.55} .blj-beli.ok .cek{background:var(--daun);border-color:var(--daun)} .blj-beli.ok b{text-decoration:line-through}
+  .blj-beli .nm{flex:1} .blj-beli .nm b{display:block} .blj-beli .nm small{color:var(--abu);font-weight:700}
+  .blj-beli .jml{font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.1rem;color:var(--cabai);text-align:right;white-space:nowrap}
+  .blj-ringkas{background:var(--coklat);color:#FFF3C4;border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
+  .blj-ringkas b{color:var(--kerupuk);font-family:'Fredoka',sans-serif;font-size:1.2rem;display:block}
+  .blj-item{display:flex;gap:8px;align-items:center;background:#fff;border:2px solid var(--garis);border-radius:12px;padding:9px 12px;margin-bottom:6px}
+  .blj-item .nm{flex:1} .blj-item .nm small{display:block;color:var(--abu);font-weight:700;font-size:.8rem}
+  .blj-item button{background:none;border:0;font-weight:800;color:var(--kuah)}
+  .blj-kosong{text-align:center;color:var(--abu);padding:26px 10px;line-height:1.6}
+  .blj-bawah{position:sticky;bottom:0;background:linear-gradient(transparent,var(--kertas) 25%);padding:14px 0 calc(8px + env(safe-area-inset-bottom));display:grid;gap:8px}
   .simpan-toko{position:sticky;bottom:0;background:linear-gradient(transparent,var(--kertas) 25%);padding:14px 0 calc(8px + env(safe-area-inset-bottom))}
   .pengaturan h2{font-size:1.4rem;margin-bottom:4px}
 </style>
@@ -242,6 +268,7 @@
     <button data-hal="riwayat">Riwayat</button>
     <button data-hal="stat">Statistik</button>
     <button data-hal="toko">Toko</button>
+    <button data-hal="belanja">Belanja</button>
     <button data-hal="resep">Resep</button>
     <button data-hal="atur" aria-label="Pengaturan">⚙️</button>
   </nav>
@@ -411,6 +438,18 @@
     </div>
   </section>
 
+  <!-- ============ BELANJA ============ -->
+  <section id="hal-belanja" hidden>
+    <div class="blj">
+      <div class="pil" id="bMode" style="margin-bottom:10px">
+        <button data-v="cek" aria-pressed="true">📋 Cek stok</button>
+        <button data-v="daftar" aria-pressed="false">🛒 Daftar belanja</button>
+        <button data-v="atur" aria-pressed="false">⚙️ Atur bahan</button>
+      </div>
+      <div id="bIsi"></div>
+    </div>
+  </section>
+
   <!-- ============ RESEP ============ -->
   <section id="hal-resep" hidden>
     <div class="resep-atas"><input type="text" id="rCari" placeholder="Cari resep…" autocomplete="off"><button class="btn" id="rBaru">+ Resep</button></div>
@@ -562,7 +601,7 @@
 <div id="areaCetak"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="menu.js?v=17"></script>
+<script src="menu.js?v=18"></script>
 <script>
 /* Nilai cadangan: website tetap jalan walau menu.js versi lama masih tersimpan di cache */
 KEDAI.bonusShare = KEDAI.bonusShare || { maks: 5000 };
@@ -575,7 +614,7 @@ KEDAI.rekening = KEDAI.rekening || [];
 KEDAI.jamBuka = KEDAI.jamBuka ?? 10; KEDAI.jamTutup = KEDAI.jamTutup ?? 18;
 KEDAI.api = KEDAI.api || "https://script.google.com/macros/s/AKfycbyWFdxY-Okd7YjSLrnfv0rvIZXD4Cf9kwlbzmYnPsZHJJ5fAHzXGOk3uuXV3k4VOc2M/exec";
 </script>
-<script src="toko.js?v=17"></script>
+<script src="toko.js?v=18"></script>
 <script>
 /* ===================== DASAR ===================== */
 const $ = id => document.getElementById(id);
@@ -646,7 +685,7 @@ async function sinkron(diam){
       if (!j.ok) throw new Error(j.error);
       antrianStatus = antrianStatus.filter(s => !j.diubah.includes(s.id));
     }
-    if (await ambilToko(cfg.url)) { bangunItem(); renderKat(); renderMenu(); if (halaman==="toko" && !tokoDiubah) renderToko(); }
+    if (await ambilToko(cfg.url)) { bangunItem(); renderKat(); renderMenu(); if (halaman==="toko" && !tokoDiubah) renderToko(); if (halaman==="belanja" && !stokDiubah) renderBelanja(); }
     const dari = Date.now() - 62*864e5;
     const j = await panggil("GET", dari);
     if (!j.ok) throw new Error(j.error);
@@ -671,7 +710,7 @@ let halaman = "kasir";
 function keHalaman(h){
   halaman = h;
   document.querySelectorAll("#tab button").forEach(b => b.classList.toggle("on", b.dataset.hal===h));
-  ["kasir","riwayat","stat","toko","resep","atur"].forEach(x => $("hal-"+x).hidden = x!==h);
+  ["kasir","riwayat","stat","toko","belanja","resep","atur"].forEach(x => $("hal-"+x).hidden = x!==h);
   $("main").classList.toggle("di-kasir", h==="kasir");
   renderHalaman();
 }
@@ -682,6 +721,7 @@ function renderHalaman(){
   if (halaman==="stat") renderStat();
   if (halaman==="toko" && !tokoDiubah) renderToko();
   if (halaman==="resep") renderResep();
+  if (halaman==="belanja") renderBelanja();
 }
 
 /* ===================== KASIR: MENU ===================== */
@@ -947,6 +987,210 @@ $("sBatal").onclick = () => {
   simpanLokal(); tutupModal(); renderHalaman(); kabari("Pesanan dibatalkan"); sinkron(true);
 };
 
+/* ===================== SIMPAN TOKO (gabung data terbaru) ===================== */
+async function simpanTokoGabung(ubah){
+  if (!cfg.url) throw new Error("Atur link Apps Script dulu di menu ⚙️.");
+  const r = await fetch(cfg.url + "?aksi=toko&_=" + Date.now(), {cache:"no-store"});
+  const t = await r.json();
+  if (!t.ok) throw new Error(t.error || "Gagal mengambil data toko");
+  const baru = ubah(t.toko || {});
+  const j = await panggil("POST", {aksi:"toko", toko: baru, perangkat: cfg.perangkat});
+  if (!j.ok) throw new Error(j.error || "Gagal menyimpan");
+  TOKO_JSON = JSON.stringify(j.toko); localStorage.setItem("toko-set", TOKO_JSON); terapkanToko(j.toko);
+  return j.toko;
+}
+
+/* ===================== BELANJA / STOK BAHAN ===================== */
+let modeBelanja = "cek", stokDiubah = false, stokDraf = {}, editBahan = null;
+const TEMPAT = ["Pasar", "Grosir / toko", "Supermarket", "Lainnya"];
+const SATUAN = ["kg", "ons", "gram", "liter", "bungkus", "pcs", "butir", "ikat", "pak", "renceng", "dus", "botol", "tabung"];
+const dataBelanja = () => ({ bahan: [], sisa: {}, ...(TOKO.belanja || {}) });
+const angkaRapi = n => (Math.round((+n||0)*100)/100).toLocaleString("id-ID");
+let centang = ambil("belanja-centang", []);
+function kebutuhan(){
+  const d = dataBelanja();
+  return d.bahan.map(b => {
+    const sisa = d.sisa[b.id] === undefined || d.sisa[b.id] === "" ? 0 : +d.sisa[b.id];
+    return { ...b, sisa, beli: Math.max(0, Math.round((+b.target - sisa)*100)/100) };
+  }).filter(b => b.beli > 0);
+}
+$("bMode").onclick = e => { const b = e.target.closest("button"); if (!b) return; modeBelanja = b.dataset.v; pilihTombol("bMode", modeBelanja); renderBelanja(); };
+
+function renderBelanja(){
+  const d = dataBelanja();
+  pilihTombol("bMode", modeBelanja);
+  if (modeBelanja === "atur") return renderAturBahan(d);
+  if (!d.bahan.length) {
+    $("bIsi").innerHTML = `<div class="blj-kosong">🧺 Belum ada daftar bahan.<br>Buka <b>⚙️ Atur bahan</b> untuk mengisi bahan dan jumlah stok penuhnya (seperti saat belanja awal).<br><br><button class="btn" id="bKeAtur">Atur bahan sekarang</button></div>`;
+    $("bKeAtur").onclick = () => { modeBelanja = "atur"; renderBelanja(); };
+    return;
+  }
+  if (modeBelanja === "cek") return renderCekStok(d);
+  return renderDaftarBelanja(d);
+}
+
+function kelompok(list){
+  return TEMPAT.map(t => [t, list.filter(b => (b.tempat||"Lainnya") === t)]).filter(([,l]) => l.length);
+}
+
+/* ---- Cek stok ---- */
+function renderCekStok(d){
+  if (!stokDiubah) stokDraf = { ...d.sisa };
+  const baris = b => {
+    const v = stokDraf[b.id], sisa = v === undefined || v === "" ? null : +v;
+    const st = sisa === null ? ["", "Belum diisi"] : sisa <= 0 ? ["habis", "Habis — beli " + angkaRapi(b.target) + " " + b.satuan] : sisa < +b.target ? ["kurang", "Kurang — beli " + angkaRapi(b.target - sisa) + " " + b.satuan] : ["cukup", "✓ Cukup"];
+    return `<div class="blj-baris ${st[0]}">
+      <div class="blj-atas"><b>${esc(b.nama)}</b><small>stok penuh ${angkaRapi(b.target)} ${esc(b.satuan)}</small></div>
+      <div class="blj-input">
+        <input type="number" inputmode="decimal" step="any" min="0" data-sisa="${b.id}" value="${v ?? ""}" placeholder="sisa" aria-label="Sisa ${esc(b.nama)}">
+        <span>${esc(b.satuan)} tersisa</span>
+        <button data-habis="${b.id}">Habis</button><button data-penuh="${b.id}">Penuh</button>
+      </div>
+      <div class="blj-status ${st[0]}">${st[1]}</div>
+    </div>`;
+  };
+  $("bIsi").innerHTML = `<p class="kecil" style="margin-bottom:6px">Isi <b>sisa stok</b> setiap selesai jualan. ${d.cekTs ? `Terakhir dicek ${tglPanjang(d.cekTs)} ${jamWIB(d.cekTs)}${d.cekOleh?" oleh "+esc(d.cekOleh):""}.` : ""}</p>`
+    + kelompok(d.bahan).map(([t, l]) => `<div class="blj-tempat">${t}</div>` + l.map(baris).join("")).join("")
+    + `<div class="blj-bawah"><div class="err" id="bErr"></div><button class="btn hijau lebar" id="bSimpanStok">Simpan stok${stokDiubah?" •":""}</button></div>`;
+  $("bSimpanStok").onclick = simpanStok;
+}
+$("bIsi").addEventListener("input", e => {
+  const inp = e.target.closest("input[data-sisa]"); if (!inp) return;
+  stokDraf[inp.dataset.sisa] = inp.value === "" ? "" : +inp.value; stokDiubah = true;
+  const b = dataBelanja().bahan.find(x => x.id === inp.dataset.sisa), kotak = inp.closest(".blj-baris"), stEl = kotak.querySelector(".blj-status");
+  const sisa = inp.value === "" ? null : +inp.value;
+  const st = sisa === null ? ["", "Belum diisi"] : sisa <= 0 ? ["habis", "Habis — beli " + angkaRapi(b.target) + " " + b.satuan] : sisa < +b.target ? ["kurang", "Kurang — beli " + angkaRapi(b.target - sisa) + " " + b.satuan] : ["cukup", "✓ Cukup"];
+  kotak.className = "blj-baris " + st[0]; stEl.className = "blj-status " + st[0]; stEl.textContent = st[1];
+  $("bSimpanStok").textContent = "Simpan stok •";
+});
+$("bIsi").addEventListener("click", e => {
+  const h = e.target.closest("button[data-habis],button[data-penuh]");
+  if (h) {
+    const id = h.dataset.habis || h.dataset.penuh, b = dataBelanja().bahan.find(x => x.id === id);
+    const inp = $("bIsi").querySelector(`input[data-sisa="${id}"]`);
+    inp.value = h.dataset.habis ? 0 : b.target; inp.dispatchEvent(new Event("input", {bubbles:true}));
+    return;
+  }
+  const c = e.target.closest(".blj-beli");
+  if (c) {
+    const id = c.dataset.id;
+    centang = centang.includes(id) ? centang.filter(x => x !== id) : [...centang, id];
+    simpan("belanja-centang", centang); renderBelanja();
+  }
+});
+async function simpanStok(){
+  const btn = $("bSimpanStok"); btn.disabled = true; btn.textContent = "Menyimpan…"; $("bErr").textContent = "";
+  try {
+    await simpanTokoGabung(t => ({ ...t, belanja: { bahan: [], ...(t.belanja || {}), sisa: { ...((t.belanja||{}).sisa || {}), ...stokDraf }, cekTs: Date.now(), cekOleh: cfg.perangkat || "" } }));
+    stokDiubah = false; centang = []; simpan("belanja-centang", centang);
+    kabari("✓ Stok tersimpan"); modeBelanja = "daftar"; renderBelanja();
+  } catch(e) { $("bErr").textContent = e.message.includes("fetch") ? "Tidak ada internet." : e.message; btn.disabled = false; btn.textContent = "Simpan stok •"; }
+}
+
+/* ---- Daftar belanja ---- */
+function teksBelanja(){
+  const list = kebutuhan();
+  let t = `*Daftar Belanja ${KEDAI.nama}*\n${tglPanjang(Date.now())}\n`;
+  kelompok(list).forEach(([tp, l]) => { t += `\n*${tp}*\n` + l.map(b => `☐ ${b.nama}: ${angkaRapi(b.beli)} ${b.satuan}`).join("\n") + "\n"; });
+  const est = list.reduce((s,b) => s + (+b.harga||0) * b.beli, 0);
+  if (est) t += `\nPerkiraan biaya: ${rp(est)}`;
+  return t;
+}
+function renderDaftarBelanja(d){
+  const list = kebutuhan();
+  if (!list.length) {
+    $("bIsi").innerHTML = `<div class="blj-kosong">🎉 Semua stok masih cukup.<br>Tidak perlu belanja dulu.${d.cekTs?"":"<br><br>Isi dulu sisa stok di <b>📋 Cek stok</b>."}</div>`;
+    return;
+  }
+  const est = list.reduce((s,b) => s + (+b.harga||0) * b.beli, 0), sudah = list.filter(b => centang.includes(b.id)).length;
+  $("bIsi").innerHTML = `
+    <div class="blj-ringkas"><div><b>${list.length} bahan</b>perlu dibeli · ${sudah} sudah</div><div style="text-align:right">${est ? `<b>${rp(est)}</b>perkiraan biaya` : ""}</div></div>
+    <p class="kecil" style="margin:6px 0">Ketuk bahan yang sudah dibeli. Jumlahnya dihitung supaya stok kembali penuh seperti belanja awal.</p>`
+    + kelompok(list).map(([t, l]) => `<div class="blj-tempat">${t}</div>` + l.map(b => `
+      <button class="blj-beli ${centang.includes(b.id)?"ok":""}" data-id="${b.id}">
+        <span class="cek">${centang.includes(b.id)?"✓":""}</span>
+        <span class="nm"><b>${esc(b.nama)}</b><small>sisa ${angkaRapi(b.sisa)} dari ${angkaRapi(b.target)} ${esc(b.satuan)}${+b.harga?` · ±${rp(b.harga*b.beli)}`:""}</small></span>
+        <span class="jml">${angkaRapi(b.beli)} ${esc(b.satuan)}</span>
+      </button>`).join("")).join("")
+    + `<div class="blj-bawah"><div class="err" id="bErr"></div>
+        <button class="btn putih lebar" id="bWa">📤 Kirim daftar ke WhatsApp</button>
+        <button class="btn hijau lebar" id="bSelesai"${sudah?"":" disabled"}>✓ Selesai belanja (${sudah} bahan jadi penuh)</button></div>`;
+  $("bWa").onclick = () => window.open("https://wa.me/?text=" + encodeURIComponent(teksBelanja()), "_blank");
+  $("bSelesai").onclick = async () => {
+    const ids = list.filter(b => centang.includes(b.id));
+    if (!ids.length) return;
+    $("bSelesai").disabled = true; $("bSelesai").textContent = "Menyimpan…";
+    try {
+      await simpanTokoGabung(t => { const bl = { bahan: [], sisa: {}, ...(t.belanja || {}) }; const sisa = { ...bl.sisa }; ids.forEach(b => sisa[b.id] = +b.target); return { ...t, belanja: { ...bl, sisa } }; });
+      centang = []; simpan("belanja-centang", centang); kabari("✓ Stok bahan yang dibeli sudah penuh lagi"); renderBelanja();
+    } catch(e) { $("bErr").textContent = e.message; $("bSelesai").disabled = false; }
+  };
+}
+
+/* ---- Atur bahan ---- */
+function renderAturBahan(d){
+  const b = editBahan ? d.bahan.find(x => x.id === editBahan) : null;
+  $("bIsi").innerHTML = `
+    <div class="kartu">
+      <h3 style="font-size:1.1rem">${b ? "✏️ Edit bahan" : "➕ Tambah bahan"}</h3>
+      <span class="label">Nama bahan</span><input type="text" id="baNama" placeholder="Contoh: Kerupuk bawang" value="${esc(b?.nama||"")}">
+      <div class="dua">
+        <div><span class="label">Stok penuh</span><input type="number" id="baTarget" inputmode="decimal" step="any" min="0" placeholder="Contoh: 5" value="${b?.target ?? ""}"></div>
+        <div><span class="label">Satuan</span><input type="text" id="baSatuan" list="daftarSatuan" placeholder="kg" value="${esc(b?.satuan||"")}"></div>
+      </div>
+      <datalist id="daftarSatuan">${SATUAN.map(x => `<option value="${x}">`).join("")}</datalist>
+      <div class="dua">
+        <div><span class="label">Beli di</span><select id="baTempat">${TEMPAT.map(x => `<option${(b?.tempat||"Pasar")===x?" selected":""}>${x}</option>`).join("")}</select></div>
+        <div><span class="label">Harga/satuan <em>(opsional)</em></span><input type="number" id="baHarga" inputmode="numeric" min="0" step="500" placeholder="0" value="${b?.harga || ""}"></div>
+      </div>
+      <p class="kecil" style="margin-top:6px"><b>Stok penuh</b> = jumlah yang kamu beli saat belanja awal. Daftar belanja akan selalu mengembalikan stok ke jumlah ini.</p>
+      <div class="err" id="baErr"></div>
+      <div class="aksi">${b ? `<button class="btn putih" id="baBatal">Batal</button>` : ""}<button class="btn hijau" id="baSimpan">${b ? "Simpan perubahan" : "Tambahkan"}</button></div>
+    </div>
+    <div class="blj-tempat" style="display:flex;justify-content:space-between;align-items:center">Daftar bahan (${d.bahan.length})${d.bahan.length ? "" : `<button class="btn putih" id="baContoh" style="font-size:.8rem;padding:6px 10px">Isi contoh bahan</button>`}</div>
+    ${d.bahan.length ? kelompok(d.bahan).map(([t, l]) => `<div class="kecil" style="font-weight:800;margin:8px 0 4px">${t}</div>` + l.map(x => `
+      <div class="blj-item"><div class="nm"><b>${esc(x.nama)}</b><small>stok penuh ${angkaRapi(x.target)} ${esc(x.satuan)}${+x.harga?` · ${rp(x.harga)}/${esc(x.satuan)}`:""}</small></div>
+      <button data-edit="${x.id}">Edit</button><button data-hapusb="${x.id}" style="color:var(--cabai)">Hapus</button></div>`).join("")).join("")
+      : `<p class="kecil">Belum ada bahan. Tambahkan satu per satu, atau tekan <b>Isi contoh bahan</b> untuk memulai dari daftar bahan seblak umum lalu ubah jumlahnya.</p>`}`;
+  $("baSimpan").onclick = simpanBahan;
+  if (b) $("baBatal").onclick = () => { editBahan = null; renderBelanja(); };
+  if ($("baContoh")) $("baContoh").onclick = isiContohBahan;
+  $("bIsi").querySelectorAll("[data-edit]").forEach(x => x.onclick = () => { editBahan = x.dataset.edit; renderBelanja(); window.scrollTo({top:0, behavior:"smooth"}); });
+  $("bIsi").querySelectorAll("[data-hapusb]").forEach(x => x.onclick = async () => {
+    const it = d.bahan.find(y => y.id === x.dataset.hapusb);
+    if (!confirm(`Hapus bahan "${it.nama}"?`)) return;
+    try { await simpanTokoGabung(t => { const bl = { bahan: [], sisa: {}, ...(t.belanja||{}) }; const sisa = { ...bl.sisa }; delete sisa[it.id]; return { ...t, belanja: { ...bl, bahan: bl.bahan.filter(y => y.id !== it.id), sisa } }; }); kabari("Bahan dihapus"); renderBelanja(); }
+    catch(e) { alert(e.message); }
+  });
+}
+async function simpanBahan(){
+  const nama = $("baNama").value.trim(), target = +$("baTarget").value, satuan = $("baSatuan").value.trim() || "pcs";
+  $("baErr").textContent = "";
+  if (!nama) { $("baErr").textContent = "Isi nama bahan."; return; }
+  if (!(target > 0)) { $("baErr").textContent = "Isi jumlah stok penuh (lebih dari 0)."; return; }
+  const data = { id: editBahan || "B" + Date.now().toString(36), nama, target, satuan, tempat: $("baTempat").value, harga: +$("baHarga").value || 0 };
+  $("baSimpan").disabled = true; $("baSimpan").textContent = "Menyimpan…";
+  try {
+    await simpanTokoGabung(t => { const bl = { bahan: [], sisa: {}, ...(t.belanja||{}) }; return { ...t, belanja: { ...bl, bahan: [...bl.bahan.filter(x => x.id !== data.id), data] } }; });
+    kabari(editBahan ? "✓ Bahan diperbarui" : `✓ ${nama} ditambahkan`); editBahan = null; renderBelanja(); setTimeout(() => $("baNama") && $("baNama").focus(), 100);
+  } catch(e) { $("baErr").textContent = e.message.includes("fetch") ? "Tidak ada internet." : e.message; $("baSimpan").disabled = false; $("baSimpan").textContent = "Coba lagi"; }
+}
+async function isiContohBahan(){
+  if (!confirm("Isi daftar contoh bahan seblak? Jumlah stok penuh semuanya diisi 1, nanti ubah sesuai belanja awalmu.")) return;
+  const n = Date.now().toString(36); let i = 0;
+  const x = (nama, satuan, tempat) => ({ id: "B" + n + (i++), nama, target: 1, satuan, tempat, harga: 0 });
+  const contoh = [
+    x("Kerupuk bawang", "kg", "Pasar"), x("Kencur", "ons", "Pasar"), x("Bawang putih", "ons", "Pasar"), x("Bawang merah", "ons", "Pasar"),
+    x("Cabai rawit", "ons", "Pasar"), x("Daun bawang", "ikat", "Pasar"), x("Telur ayam", "kg", "Pasar"),
+    ...TOPPING.map(t => x(t.nama, "pcs", "Grosir / toko")),
+    ...(typeof MIE_GORENG !== "undefined" ? [...MIE_GORENG, ...MIE_KUAH] : []).map(m => x(m, "dus", "Grosir / toko")),
+    x("Minyak goreng", "liter", "Grosir / toko"), x("Garam & penyedap", "bungkus", "Grosir / toko"), x("Gas elpiji", "tabung", "Lainnya"),
+    x("Es batu", "bungkus", "Lainnya"), x("Gelas plastik", "pak", "Grosir / toko"), x("Mangkuk/wadah bungkus", "pak", "Grosir / toko"), x("Kantong plastik", "pak", "Grosir / toko")
+  ];
+  try { await simpanTokoGabung(t => ({ ...t, belanja: { bahan: contoh, sisa: {}, ...(t.belanja||{}), bahan: [...((t.belanja||{}).bahan||[]), ...contoh] } })); kabari("✓ Contoh bahan ditambahkan. Edit jumlah stok penuhnya."); renderBelanja(); }
+  catch(e) { alert(e.message); }
+}
+
 /* ===================== RESEP ===================== */
 let resep = ambil("kasir-resep", []);
 let resepDidukung = true, resepAktif = null;
@@ -1167,9 +1411,7 @@ $("tSimpan").onclick = async () => {
   if (!(draf.jamBuka >= 0 && draf.jamTutup <= 24 && draf.jamBuka < draf.jamTutup)) { $("tErr").textContent = "Jam buka harus lebih kecil dari jam tutup (0–24)."; return; }
   $("tSimpan").disabled = true; $("tSimpan").textContent = "Menyimpan…";
   try {
-    const j = await panggil("POST", {aksi:"toko", toko:draf, perangkat:cfg.perangkat});
-    if (!j.ok) throw new Error(j.error || "Gagal");
-    TOKO_JSON = JSON.stringify(j.toko); localStorage.setItem("toko-set", TOKO_JSON); terapkanToko(j.toko);
+    await simpanTokoGabung(t => ({...draf, belanja: t.belanja}));
     kabari("✓ Pengaturan toko tersimpan"); bangunItem(); renderKat(); renderToko(); renderMenu();
   } catch(e) {
     $("tErr").textContent = String(e.message).includes("PIN") ? "PIN salah." : "Gagal menyimpan. Pastikan internet menyala dan Apps Script sudah diperbarui.";
