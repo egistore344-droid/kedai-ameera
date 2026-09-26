@@ -200,6 +200,8 @@
   .cek{display:flex;gap:8px;align-items:center;font-weight:700;margin:6px 0}
   .cek input{width:20px;height:20px;accent-color:var(--daun)}
   .tag-baru{font-size:.65rem;background:var(--kerupuk);border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:middle}
+  .varian-btn{display:block;background:none;border:0;padding:2px 0 0;color:var(--kuah);font-weight:800;font-size:.78rem}
+  .pindah{display:block;margin-top:4px;padding:3px 6px;border-radius:8px;border:2px solid var(--garis);font-size:.78rem;font-weight:700;max-width:100%}
   .hapus-menu{display:block;background:none;border:0;color:var(--cabai);font-weight:800;font-size:.78rem;padding:2px 0 0}
   .resep-atas{display:flex;gap:8px;margin-bottom:12px;max-width:760px;margin-left:auto;margin-right:auto}
   .resep-atas input{flex:1}
@@ -372,6 +374,8 @@
           <option value="seblak">Topping seblak</option>
           <option value="mie">Topping mie seblak (termasuk baso)</option>
         </select>
+        <span class="label">Pilihan jenis/varian <em>(opsional, satu per baris)</em></span>
+        <textarea id="mVarian" rows="3" placeholder="Contoh untuk kopi:&#10;Kopi hitam&#10;Kopi susu&#10;Kopi gula aren"></textarea>
         <div class="err" id="mErr"></div>
         <button class="btn lebar" id="mTambah">Tambahkan ke daftar</button>
         <p class="kecil" style="margin-top:8px">Menu baru muncul di website dan kasir setelah kamu menekan <b>Simpan pengaturan toko</b>.</p>
@@ -438,7 +442,7 @@
   <div class="isi">
     <h3 id="pJudul"></h3>
     <div class="kecil" id="pHarga"></div>
-    <div id="pBlokVarian"><span class="label">Pilih mie</span><div class="pil" id="pVarian"></div></div>
+    <div id="pBlokVarian"><span class="label" id="pLabelVarian">Pilih mie</span><div class="pil" id="pVarian"></div></div>
     <div id="pBlokRasa"><span class="label">Rasa</span><div class="pil" id="pRasa"></div></div>
     <div id="pBlokLevel"><span class="label">Level pedas</span><div class="level" id="pLevel"></div></div>
     <div id="pBlokTp"><span class="label">Topping</span><div id="pTp"></div></div>
@@ -485,6 +489,16 @@
     <span class="label">Pilih hadiah</span>
     <div class="pil" id="vHadiah"></div>
     <div class="aksi"><button class="btn putih" data-tutup>Batal</button><button class="btn hijau" id="vOk" disabled>Tukar</button></div>
+  </div>
+</div>
+
+<!-- Modal atur varian -->
+<div class="modal" id="mVarianEdit">
+  <div class="isi">
+    <h3 id="veJudul">Varian</h3>
+    <p class="kecil">Tulis satu pilihan per baris. Pembeli wajib memilih salah satu saat memesan. Kosongkan semua baris untuk menghapus pilihan varian.</p>
+    <textarea id="veIsi" rows="7" style="margin-top:10px"></textarea>
+    <div class="aksi"><button class="btn putih" data-tutup>Batal</button><button class="btn hijau" id="veOk">Pakai</button></div>
   </div>
 </div>
 
@@ -548,7 +562,7 @@
 <div id="areaCetak"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="menu.js?v=15"></script>
+<script src="menu.js?v=17"></script>
 <script>
 /* Nilai cadangan: website tetap jalan walau menu.js versi lama masih tersimpan di cache */
 KEDAI.bonusShare = KEDAI.bonusShare || { maks: 5000 };
@@ -561,7 +575,7 @@ KEDAI.rekening = KEDAI.rekening || [];
 KEDAI.jamBuka = KEDAI.jamBuka ?? 10; KEDAI.jamTutup = KEDAI.jamTutup ?? 18;
 KEDAI.api = KEDAI.api || "https://script.google.com/macros/s/AKfycbyWFdxY-Okd7YjSLrnfv0rvIZXD4Cf9kwlbzmYnPsZHJJ5fAHzXGOk3uuXV3k4VOc2M/exec";
 </script>
-<script src="toko.js?v=15"></script>
+<script src="toko.js?v=17"></script>
 <script>
 /* ===================== DASAR ===================== */
 const $ = id => document.getElementById(id);
@@ -710,6 +724,7 @@ function bukaPilih(id){
   $("pBlokRasa").hidden = !i.rasa;
   $("pBlokLevel").hidden = i.level===false;
   $("pBlokVarian").hidden = !i.varian;
+  $("pLabelVarian").textContent = i.labelVarian || "Pilih jenis";
   $("pVarian").innerHTML = (i.varian||[]).map(v => `<button data-v="${v}">${v.replace("Indomie ","")}</button>`).join("");
   $("pRasa").innerHTML = RASA.map(r => `<button data-v="${r}">${r}</button>`).join("");
   $("pLevel").innerHTML = LEVEL.map((_,n) => `<button data-v="${n}" aria-label="Level ${n}">${n}</button>`).join("");
@@ -1025,7 +1040,7 @@ function renderToko(){
   $("tPesan").value = draf.pesanTutup || "";
   $("tBuka").value = draf.jamBuka; $("tTutup").value = draf.jamTutup;
   $("tPengumuman").value = draf.pengumuman || "";
-  $("mKat").innerHTML = MENU.map(k => `<option value="${k.id}">${k.judul}</option>`).join("");
+  if (!$("mKat").value) $("mKat").innerHTML = `<option value="">— Pilih kategori —</option>` + MENU.map(k => `<option value="${k.id}">${k.judul}</option>`).join("");
   renderStokList();
   renderTokoStatus();
   $("tInfo").textContent = TOKO.diubah ? `Terakhir diubah ${tglPanjang(TOKO.diubah)} ${jamWIB(TOKO.diubah)}${TOKO.oleh?" oleh "+TOKO.oleh:""}` : "";
@@ -1034,7 +1049,7 @@ function renderToko(){
 function renderStokList(){
   const baris = (key, nama, harga, asli, hKey, baru) => `
     <div class="baris-stok">
-      <b>${nama}${baru?`<span class="tag-baru">BARU</span><button class="hapus-menu" data-hapus="${key}">${key.startsWith("tp:")?"Hapus topping":"Hapus menu"}</button>`:""}</b>
+      <b>${nama}${!key.startsWith("tp:") ? `<button class="varian-btn" data-ve="${key}">✏️ Varian${(varianDraf(key)||[]).length?" ("+varianDraf(key).length+")":""}</button>` : ""}${baru?`<span class="tag-baru">BARU</span>${baru && !key.startsWith("tp:") ? `<select class="pindah" data-pindah="${key}" aria-label="Pindah kategori">${MENU.map(k => `<option value="${k.id}"${(draf.menuBaru.find(m=>m.id===key)||{}).kat===k.id?" selected":""}>${k.judul}</option>`).join("")}</select>` : ""}<button class="hapus-menu" data-hapus="${key}">${key.startsWith("tp:")?"Hapus topping":"Hapus menu"}</button>`:""}</b>
       <input type="number" inputmode="numeric" min="0" step="500" data-h="${hKey}" data-k="${key}" value="${harga}" class="${harga!==asli?"ubah":""}" aria-label="Harga ${nama}">
       <button class="stok${draf.habis.includes(key)?" habis":""}" data-s="${key}">${draf.habis.includes(key)?"Habis":"Tersedia"}</button>
     </div>`;
@@ -1060,6 +1075,15 @@ $("tBuka").oninput = () => { draf.jamBuka = +$("tBuka").value; tandaiUbah(); ren
 $("tTutup").oninput = () => { draf.jamTutup = +$("tTutup").value; tandaiUbah(); renderTokoStatus(); };
 $("tPengumuman").oninput = () => { draf.pengumuman = $("tPengumuman").value; tandaiUbah(); };
 $("tMenu").addEventListener("click", e => {
+  const ve = e.target.closest("button[data-ve]");
+  if (ve) {
+    veId = ve.dataset.ve;
+    const nm = semuaItem[veId]?.nama || (draf.menuBaru||[]).find(m => m.id===veId)?.nama || "";
+    $("veJudul").textContent = "Varian: " + nm;
+    $("veIsi").value = varianDraf(veId).join("\n");
+    $("veIsi").placeholder = /kopi/i.test(nm) ? "Kopi hitam\nKopi susu\nKopi gula aren" : /susu/i.test(nm) ? "Susu coklat\nSusu vanila\nSusu stroberi" : "Varian 1\nVarian 2";
+    bukaModal("mVarianEdit"); return;
+  }
   const h = e.target.closest("button[data-hapus]");
   if (h && h.dataset.hapus.startsWith("tp:")) {
     const nama = h.dataset.hapus.slice(3);
@@ -1082,6 +1106,22 @@ $("tMenu").addEventListener("click", e => {
   draf.habis = habis ? [...draf.habis, k] : draf.habis.filter(x=>x!==k);
   b.classList.toggle("habis", habis); b.textContent = habis ? "Habis" : "Tersedia"; tandaiUbah();
 });
+function varianDraf(id){
+  const v = (draf.varian || {})[id];
+  if (Array.isArray(v)) return v;
+  return (ASLI[id] || {}).varian || [];
+}
+let veId = null;
+$("veOk").onclick = () => {
+  const list = $("veIsi").value.split("\n").map(x => x.trim()).filter(Boolean);
+  draf.varian = draf.varian || {}; draf.varian[veId] = list;
+  tutupModal(); renderStokList(); tandaiUbah(); kabari("Varian diubah. Tekan Simpan pengaturan toko.");
+};
+$("tMenu").addEventListener("change", e => {
+  const sel = e.target.closest("select[data-pindah]"); if (!sel) return;
+  const m = draf.menuBaru.find(x => x.id===sel.dataset.pindah);
+  if (m) { m.kat = sel.value; renderStokList(); tandaiUbah(); kabari(`${m.nama} dipindah ke ${MENU.find(k=>k.id===m.kat)?.judul}. Tekan Simpan.`); }
+});
 $("tMenu").addEventListener("input", e => {
   const inp = e.target.closest("input[data-h]"); if (!inp) return;
   if (inp.dataset.h === "tpbaru") { const t = (draf.toppingBaru||[]).find(x => "tp:"+x.nama===inp.dataset.k); if (t) t.harga = +inp.value || 0; tandaiUbah(); return; }
@@ -1095,12 +1135,17 @@ $("mTambah").onclick = () => {
   const nama = $("mNama").value.trim(), harga = +$("mHarga").value;
   $("mErr").textContent = "";
   if (!nama) { $("mErr").textContent = "Isi nama menu dulu."; return; }
+  if (!$("mKat").value) { $("mErr").textContent = "Pilih kategori menu dulu (misalnya Makanan Lain atau Cemilan)."; $("mKat").focus(); return; }
   if (!(harga > 0)) { $("mErr").textContent = "Isi harga menu."; return; }
   if (Object.values(semuaItem).some(i => i.nama.toLowerCase()===nama.toLowerCase()) || (draf.menuBaru||[]).some(m => m.nama.toLowerCase()===nama.toLowerCase())) { $("mErr").textContent = "Nama menu itu sudah ada."; return; }
   draf.menuBaru = draf.menuBaru || [];
-  draf.menuBaru.push({ id: "x" + Date.now().toString(36), kat: $("mKat").value, nama, harga,
+  const idBaru = "x" + Date.now().toString(36);
+  draf.menuBaru.push({ id: idBaru, kat: $("mKat").value, nama, harga,
     level: $("mLevel").checked, rasa: $("mRasa").checked, topping: $("mTp").value });
-  ["mNama","mHarga"].forEach(id => $(id).value = ""); $("mLevel").checked = $("mRasa").checked = false; $("mTp").value = "";
+  const vb = $("mVarian").value.split("\n").map(x => x.trim()).filter(Boolean);
+  if (vb.length) { draf.varian = draf.varian || {}; draf.varian[idBaru] = vb; }
+  $("mVarian").value = "";
+  ["mNama","mHarga","mKat"].forEach(id => $(id).value = ""); $("mLevel").checked = $("mRasa").checked = false; $("mTp").value = "";
   renderStokList(); tandaiUbah(); kabari(`✓ ${nama} ditambahkan. Tekan Simpan pengaturan toko.`);
 };
 $("tpTambah").onclick = () => {
@@ -1289,7 +1334,7 @@ function renderStat(){
     <div class="kartu"><h3>🏆 Menu terlaris</h3>${batangList(urut(menu).slice(0,10), v=>v+"x")}</div>
     <div class="kartu"><h3>🕒 Jam paling ramai</h3>${list.length?`<div class="kolom">${kolomJam}</div>`:`<div class="kecil">Belum ada data.</div>`}</div>
     ${rentang!=="hari" ? `<div class="kartu"><h3>📈 Omzet per hari</h3>${hariUrut.length?`<div class="kolom">${kolomHari}</div>`:`<div class="kecil">Belum ada data.</div>`}</div>` : ""}
-    <div class="kartu"><h3>🌶️ Rasa favorit</h3>${batangList(urut(rasa), v=>v+"x")}<h3 style="margin-top:14px">Level favorit</h3>${batangList(urut(level), v=>v+"x")}<h3 style="margin-top:14px">Varian Indomie favorit</h3>${batangList(urut(varian), v=>v+"x")}</div>
+    <div class="kartu"><h3>🌶️ Rasa favorit</h3>${batangList(urut(rasa), v=>v+"x")}<h3 style="margin-top:14px">Level favorit</h3>${batangList(urut(level), v=>v+"x")}<h3 style="margin-top:14px">Varian favorit</h3>${batangList(urut(varian), v=>v+"x")}</div>
     <div class="kartu"><h3>📲 Pesanan dari</h3>${batangList(urut(sumber))}<h3 style="margin-top:14px">Jenis pesanan</h3>${batangList(urut(metode))}</div>`;
 }
 

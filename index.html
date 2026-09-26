@@ -308,7 +308,7 @@
     <div class="harga" id="pilihHarga"></div>
 
     <div id="blokVarian">
-      <span class="label">Pilih mie</span>
+      <span class="label" id="labelVarian">Pilih mie</span>
       <div class="chips" id="varian"></div>
     </div>
 
@@ -421,7 +421,7 @@
   </div>
 </div>
 
-<script src="menu.js?v=15"></script>
+<script src="menu.js?v=17"></script>
 <script>
 /* Nilai cadangan: website tetap jalan walau menu.js versi lama masih tersimpan di cache */
 KEDAI.bonusShare = KEDAI.bonusShare || { maks: 5000 };
@@ -434,7 +434,7 @@ KEDAI.rekening = KEDAI.rekening || [];
 KEDAI.jamBuka = KEDAI.jamBuka ?? 10; KEDAI.jamTutup = KEDAI.jamTutup ?? 18;
 KEDAI.api = KEDAI.api || "https://script.google.com/macros/s/AKfycbyWFdxY-Okd7YjSLrnfv0rvIZXD4Cf9kwlbzmYnPsZHJJ5fAHzXGOk3uuXV3k4VOc2M/exec";
 </script>
-<script src="toko.js?v=15"></script>
+<script src="toko.js?v=17"></script>
 <script>
 /* Data kedai & menu ada di file menu.js */
 
@@ -583,6 +583,7 @@ function bukaPilih(id){
   $("blokRasa").hidden = !i.rasa;
   $("blokLevel").hidden = i.level===false;
   $("blokVarian").hidden = !i.varian;
+  $("labelVarian").textContent = i.labelVarian || "Pilih jenis";
   $("varian").innerHTML = (i.varian||[]).map(x => `<button data-varian="${x}" aria-pressed="false">${x.replace("Indomie ","")}</button>`).join("");
   $("rasa").innerHTML = RASA.map(x => `<button data-rasa="${x}" aria-pressed="false">${x}</button>`).join("");
   $("toppingKet").textContent = "(boleh dobel, misal ceker 2)";

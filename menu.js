@@ -57,12 +57,12 @@ const MENU = [
     {id:"sb-sea", nama:"Seblak Seafood",  harga:20000, pilih:true, topping:TP_SEBLAK, rasa:true}
   ]},
   {id:"mieseblak", judul:"Mie Seblak", sub:"Pilih level pedas 0–5 dan topping", unggulan:true, items:[
-    {id:"ms-ori", nama:"Mie Seblak Original", harga:13000, pilih:true, topping:TP_MIE, rasa:true, varian:MIE_GORENG},
-    {id:"ms-kom", nama:"Mie Seblak Komplit",  harga:25000, pilih:true, topping:TP_MIE, rasa:true, varian:MIE_GORENG}
+    {id:"ms-ori", nama:"Mie Seblak Original", harga:13000, pilih:true, topping:TP_MIE, rasa:true, varian:MIE_GORENG, labelVarian:"Pilih mie"},
+    {id:"ms-kom", nama:"Mie Seblak Komplit",  harga:25000, pilih:true, topping:TP_MIE, rasa:true, varian:MIE_GORENG, labelVarian:"Pilih mie"}
   ]},
   {id:"lain", judul:"Makanan Lain", items:[
-    {id:"mg",  nama:"Mie Goreng",     harga:8000, pilih:true, level:false, varian:MIE_GORENG, ket:"Pilih varian Indomie"},
-    {id:"mk",  nama:"Mie Kuah",       harga:8000, pilih:true, level:false, varian:MIE_KUAH, ket:"Pilih varian Indomie"},
+    {id:"mg",  nama:"Mie Goreng",     harga:8000, pilih:true, level:false, varian:MIE_GORENG, labelVarian:"Pilih mie", ket:"Pilih varian Indomie"},
+    {id:"mk",  nama:"Mie Kuah",       harga:8000, pilih:true, level:false, varian:MIE_KUAH, labelVarian:"Pilih mie", ket:"Pilih varian Indomie"},
     {id:"spt", nama:"Spageti Tulang", harga:15000, pilih:true, ket:"Bisa pilih level pedas"},
     {id:"lb",  nama:"Lumpia Basah",   harga:15000, pilih:true, ket:"Bisa pilih level pedas"}
   ]},
