@@ -601,7 +601,7 @@
 <div id="areaCetak"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="menu.js?v=18"></script>
+<script src="menu.js?v=20"></script>
 <script>
 /* Nilai cadangan: website tetap jalan walau menu.js versi lama masih tersimpan di cache */
 KEDAI.bonusShare = KEDAI.bonusShare || { maks: 5000 };
@@ -614,7 +614,7 @@ KEDAI.rekening = KEDAI.rekening || [];
 KEDAI.jamBuka = KEDAI.jamBuka ?? 10; KEDAI.jamTutup = KEDAI.jamTutup ?? 18;
 KEDAI.api = KEDAI.api || "https://script.google.com/macros/s/AKfycbyWFdxY-Okd7YjSLrnfv0rvIZXD4Cf9kwlbzmYnPsZHJJ5fAHzXGOk3uuXV3k4VOc2M/exec";
 </script>
-<script src="toko.js?v=18"></script>
+<script src="toko.js?v=20"></script>
 <script>
 /* ===================== DASAR ===================== */
 const $ = id => document.getElementById(id);
@@ -685,7 +685,7 @@ async function sinkron(diam){
       if (!j.ok) throw new Error(j.error);
       antrianStatus = antrianStatus.filter(s => !j.diubah.includes(s.id));
     }
-    if (await ambilToko(cfg.url)) { bangunItem(); renderKat(); renderMenu(); if (halaman==="toko" && !tokoDiubah) renderToko(); if (halaman==="belanja" && !stokDiubah) renderBelanja(); }
+    if (await ambilToko(cfg.url)) { bangunItem(); renderKat(); renderMenu(); if (halaman==="toko" && !tokoDiubah) renderToko(); if (halaman==="belanja" && !belanjaSedangDiisi()) renderBelanja(); }
     const dari = Date.now() - 62*864e5;
     const j = await panggil("GET", dari);
     if (!j.ok) throw new Error(j.error);
@@ -713,6 +713,7 @@ function keHalaman(h){
   ["kasir","riwayat","stat","toko","belanja","resep","atur"].forEach(x => $("hal-"+x).hidden = x!==h);
   $("main").classList.toggle("di-kasir", h==="kasir");
   renderHalaman();
+  if (h==="belanja") renderBelanja();
 }
 document.querySelectorAll("#tab button").forEach(b => b.onclick = () => keHalaman(b.dataset.hal));
 function renderHalaman(){
@@ -721,7 +722,6 @@ function renderHalaman(){
   if (halaman==="stat") renderStat();
   if (halaman==="toko" && !tokoDiubah) renderToko();
   if (halaman==="resep") renderResep();
-  if (halaman==="belanja") renderBelanja();
 }
 
 /* ===================== KASIR: MENU ===================== */
@@ -1002,6 +1002,13 @@ async function simpanTokoGabung(ubah){
 
 /* ===================== BELANJA / STOK BAHAN ===================== */
 let modeBelanja = "cek", stokDiubah = false, stokDraf = {}, editBahan = null;
+// Jangan menggambar ulang tab Belanja kalau pengguna sedang mengetik
+function belanjaSedangDiisi(){
+  const a = document.activeElement;
+  if (a && $("hal-belanja").contains(a) && /INPUT|SELECT|TEXTAREA/.test(a.tagName)) return true;
+  if (stokDiubah || editBahan) return true;
+  return ["baNama","baTarget","baSatuan","baHarga","baImpor"].some(id => $(id) && $(id).value.trim() !== "");
+}
 const TEMPAT = ["Pasar", "Grosir / toko", "Supermarket", "Lainnya"];
 const SATUAN = ["kg", "ons", "gram", "liter", "bungkus", "pcs", "butir", "ikat", "pak", "renceng", "dus", "botol", "tabung"];
 const dataBelanja = () => ({ bahan: [], sisa: {}, ...(TOKO.belanja || {}) });
@@ -1147,12 +1154,20 @@ function renderAturBahan(d){
       <div class="err" id="baErr"></div>
       <div class="aksi">${b ? `<button class="btn putih" id="baBatal">Batal</button>` : ""}<button class="btn hijau" id="baSimpan">${b ? "Simpan perubahan" : "Tambahkan"}</button></div>
     </div>
+    <details class="kartu" style="margin-top:12px" ${d.bahan.length ? "" : "open"}>
+      <summary style="font-weight:800;cursor:pointer">📥 Tempel banyak bahan sekaligus</summary>
+      <p class="kecil" style="margin:8px 0">Satu bahan per baris dengan format:<br><b>Nama | stok penuh | satuan | tempat | harga per satuan</b><br>Contoh: <i>Kecap Bango 265 | 1 | pcs | grosir | 10000</i>. Bahan yang namanya sudah ada akan diperbarui, bukan dobel.</p>
+      <textarea id="baImpor" rows="7" placeholder="Pilus Cikur 150 | 1 | pcs | grosir | 8000&#10;Plastik Es 10x3 | 2 | pak | grosir | 13000"></textarea>
+      <div class="err" id="baImporErr"></div>
+      <button class="btn lebar" id="baImporBtn">Impor bahan</button>
+    </details>
     <div class="blj-tempat" style="display:flex;justify-content:space-between;align-items:center">Daftar bahan (${d.bahan.length})${d.bahan.length ? "" : `<button class="btn putih" id="baContoh" style="font-size:.8rem;padding:6px 10px">Isi contoh bahan</button>`}</div>
     ${d.bahan.length ? kelompok(d.bahan).map(([t, l]) => `<div class="kecil" style="font-weight:800;margin:8px 0 4px">${t}</div>` + l.map(x => `
       <div class="blj-item"><div class="nm"><b>${esc(x.nama)}</b><small>stok penuh ${angkaRapi(x.target)} ${esc(x.satuan)}${+x.harga?` · ${rp(x.harga)}/${esc(x.satuan)}`:""}</small></div>
       <button data-edit="${x.id}">Edit</button><button data-hapusb="${x.id}" style="color:var(--cabai)">Hapus</button></div>`).join("")).join("")
       : `<p class="kecil">Belum ada bahan. Tambahkan satu per satu, atau tekan <b>Isi contoh bahan</b> untuk memulai dari daftar bahan seblak umum lalu ubah jumlahnya.</p>`}`;
   $("baSimpan").onclick = simpanBahan;
+  $("baImporBtn").onclick = imporBahan;
   if (b) $("baBatal").onclick = () => { editBahan = null; renderBelanja(); };
   if ($("baContoh")) $("baContoh").onclick = isiContohBahan;
   $("bIsi").querySelectorAll("[data-edit]").forEach(x => x.onclick = () => { editBahan = x.dataset.edit; renderBelanja(); window.scrollTo({top:0, behavior:"smooth"}); });
@@ -1174,6 +1189,38 @@ async function simpanBahan(){
     await simpanTokoGabung(t => { const bl = { bahan: [], sisa: {}, ...(t.belanja||{}) }; return { ...t, belanja: { ...bl, bahan: [...bl.bahan.filter(x => x.id !== data.id), data] } }; });
     kabari(editBahan ? "✓ Bahan diperbarui" : `✓ ${nama} ditambahkan`); editBahan = null; renderBelanja(); setTimeout(() => $("baNama") && $("baNama").focus(), 100);
   } catch(e) { $("baErr").textContent = e.message.includes("fetch") ? "Tidak ada internet." : e.message; $("baSimpan").disabled = false; $("baSimpan").textContent = "Coba lagi"; }
+}
+function tebakTempat(t){
+  t = (t||"").toLowerCase();
+  if (t.includes("pasar")) return "Pasar";
+  if (t.includes("super") || t.includes("mart")) return "Supermarket";
+  if (t.includes("grosir") || t.includes("toko") || t.includes("warung")) return "Grosir / toko";
+  return t ? "Lainnya" : "Grosir / toko";
+}
+async function imporBahan(){
+  const baris = $("baImpor").value.split("\n").map(x => x.trim()).filter(Boolean);
+  const hasil = [], salah = [];
+  const n = Date.now().toString(36);
+  baris.forEach((b, i) => {
+    const k = b.split("|").map(x => x.trim());
+    const nama = k[0], target = parseFloat(String(k[1]||"").replace(",", ".")), harga = parseInt(String(k[4]||"").replace(/[^0-9]/g,"")) || 0;
+    if (!nama || !(target > 0)) { salah.push(i+1); return; }
+    hasil.push({ id: "B" + n + i, nama, target, satuan: k[2] || "pcs", tempat: tebakTempat(k[3]), harga });
+  });
+  $("baImporErr").textContent = "";
+  if (!hasil.length) { $("baImporErr").textContent = "Tidak ada baris yang bisa dibaca. Cek formatnya."; return; }
+  const lama = dataBelanja().bahan, sama = x => lama.find(y => y.nama.toLowerCase() === x.nama.toLowerCase());
+  const nBaru = hasil.filter(x => !sama(x)).length, nUbah = hasil.length - nBaru;
+  if (!confirm(`Impor ${hasil.length} bahan: ${nBaru} baru, ${nUbah} diperbarui.${salah.length ? `\nBaris ${salah.join(", ")} dilewati karena formatnya salah.` : ""}`)) return;
+  $("baImporBtn").disabled = true; $("baImporBtn").textContent = "Mengimpor…";
+  try {
+    await simpanTokoGabung(t => {
+      const bl = { bahan: [], sisa: {}, ...(t.belanja||{}) }, daftar = [...bl.bahan];
+      hasil.forEach(x => { const i = daftar.findIndex(y => y.nama.toLowerCase() === x.nama.toLowerCase()); if (i >= 0) daftar[i] = { ...daftar[i], ...x, id: daftar[i].id }; else daftar.push(x); });
+      return { ...t, belanja: { ...bl, bahan: daftar } };
+    });
+    kabari(`✓ ${hasil.length} bahan diimpor`); renderBelanja();
+  } catch(e) { $("baImporErr").textContent = e.message.includes("fetch") ? "Tidak ada internet." : e.message; $("baImporBtn").disabled = false; $("baImporBtn").textContent = "Impor bahan"; }
 }
 async function isiContohBahan(){
   if (!confirm("Isi daftar contoh bahan seblak? Jumlah stok penuh semuanya diisi 1, nanti ubah sesuai belanja awalmu.")) return;
